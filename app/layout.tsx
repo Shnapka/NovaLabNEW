@@ -23,7 +23,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <Logo />
               <span className="hidden sm:inline">Nova<span className="text-sun-400">Lab</span></span>
             </Link>
-            {session?.user && <NavLinks />}
+            {session?.user ? <NavLinks role={session.user.role} /> : student ? <NavLinks role="STUDENT" /> : null}
             <div className="ml-auto flex shrink-0 items-center gap-3 text-sm">
               {session?.user ? (
                 <>

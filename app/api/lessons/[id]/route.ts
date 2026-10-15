@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { auth } from "@/auth";
+import { teacherSession } from "@/lib/authz";
 import { prisma } from "@/lib/db";
 
 const schema = z.object({
@@ -11,7 +11,7 @@ const schema = z.object({
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const session = await auth();
+  const session = await teacherSession();
   if (!session?.user?.id) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const lesson = await prisma.lesson.findUnique({ where: { id } });
@@ -40,7 +40,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const session = await auth();
+  const session = await teacherSession();
   if (!session?.user?.id) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   await prisma.lesson.deleteMany({ where: { id, ownerId: session.user.id } });
   return NextResponse.json({ ok: true });

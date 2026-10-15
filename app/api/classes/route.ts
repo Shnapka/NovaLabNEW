@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
-import { auth } from "@/auth";
+import { teacherSession } from "@/lib/authz";
 import { prisma } from "@/lib/db";
 import { newClassCode } from "@/lib/student";
 
 const schema = z.object({ name: z.string().trim().min(1).max(40) });
 
 export async function POST(req: Request) {
-  const session = await auth();
+  const session = await teacherSession();
   if (!session?.user?.id) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Введите название класса, например «7А»" }, { status: 400 });

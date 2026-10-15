@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { Logo } from "@/components/Icon";
 
@@ -10,6 +10,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [role, setRole] = useState<"TEACHER" | "STUDENT">("TEACHER");
+
+  // /login?mode=register&role=student — сразу регистрация ученика
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    if (p.get("mode") === "register") setMode("register");
+    if (p.get("role") === "student") setRole("STUDENT");
+  }, []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -20,14 +28,19 @@ export default function LoginPage() {
         const r = await fetch("/api/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, password }),
+          body: JSON.stringify({ name, email, password, role }),
         });
         if (!r.ok) return setError((await r.json()).error ?? "Ошибка");
       }
       const res = await signIn("credentials", { email, password, redirect: false });
       if (res?.error) return setError("Неверный email или пароль");
       const next = new URLSearchParams(window.location.search).get("next");
-      window.location.href = next?.startsWith("/") && !next.startsWith("//") ? next : "/library";
+      const session = await fetch("/api/auth/session").then((r) => r.json());
+      const isStudent = session?.user?.role === "STUDENT";
+      const home = isStudent ? "/student" : "/library";
+      // Ученика не пускаем по ссылке на учительский раздел
+      const safeNext = next?.startsWith("/") && !next.startsWith("//") && !(isStudent && !next.startsWith("/student")) ? next : null;
+      window.location.href = safeNext ?? home;
     } finally {
       setBusy(false);
     }
@@ -69,16 +82,37 @@ export default function LoginPage() {
           </div>
 
           <h1 className="text-2xl font-extrabold text-ocean-900">
-            {mode === "login" ? "С возвращением!" : "Создайте аккаунт учителя"}
+            {mode === "login" ? "С возвращением!" : role === "STUDENT" ? "Аккаунт ученика" : "Аккаунт учителя"}
           </h1>
           <p className="mb-6 mt-1 text-sm text-slate-500">
-            {mode === "login" ? "Войдите, чтобы открыть библиотеку уроков." : "Это займёт меньше минуты."}
+            {mode === "login"
+              ? "Учитель попадёт в библиотеку уроков, ученик — к своим урокам и статистике."
+              : role === "STUDENT"
+                ? "После регистрации вступи в класс по коду от учителя — и все твои результаты будут в одном месте."
+                : "Это займёт меньше минуты."}
           </p>
 
           <form onSubmit={submit} className="space-y-4">
             {mode === "register" && (
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  ["TEACHER", "Я учитель"],
+                  ["STUDENT", "Я ученик"],
+                ] as const).map(([r, label]) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setRole(r)}
+                    className={`rounded-xl border-2 py-2.5 text-sm font-bold transition ${role === r ? "border-ocean-700 bg-ocean-700 text-white" : "border-mist-200 text-ocean-800 hover:border-lagoon-500"}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+            {mode === "register" && (
               <label className="block">
-                <span className="mb-1 block text-sm font-medium text-slate-700">Имя</span>
+                <span className="mb-1 block text-sm font-medium text-slate-700">{role === "STUDENT" ? "Фамилия и имя" : "Имя"}</span>
                 <input className="input" required minLength={2} autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
               </label>
             )}
@@ -104,6 +138,10 @@ export default function LoginPage() {
               {busy ? "Подождите…" : mode === "login" ? "Войти" : "Создать аккаунт"}
             </button>
           </form>
+          <p className="mt-5 text-center text-sm text-slate-500">
+            Ученик без почты?{" "}
+            <a href="/student" className="font-semibold text-lagoon-700 hover:text-ocean-700">Быстрый вход по коду класса</a>
+          </p>
         </div>
       </div>
     </main>

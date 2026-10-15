@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { teacherSession } from "@/lib/authz";
 import { prisma } from "@/lib/db";
 import { plural } from "@/lib/plural";
 import { metaOf } from "@/lib/modules/meta";
 import { GRADED_TYPES, computeLessonStats, pct, scoreClass, type ResultRow } from "@/lib/stats";
 import Rich from "@/components/modules/Rich";
 import Icon from "@/components/Icon";
-import AssignLessons from "@/components/AssignLessons";
+import ClassLessons from "@/components/ClassLessons";
 
 const shortTitle = (t: string) => {
   const s = t.replace(/^[^:]+:\s*/, "");
@@ -59,13 +59,13 @@ export default async function ClassPage({
 }) {
   const { id } = await params;
   const { lesson: lessonParam } = await searchParams;
-  const session = await auth();
+  const session = await teacherSession();
   if (!session?.user?.id) redirect(`/login?next=/classes/${id}`);
 
   const classroom = await prisma.classroom.findFirst({
     where: { id, ownerId: session.user.id },
     include: {
-      students: { orderBy: { name: "asc" }, include: { _count: { select: { results: true } } } },
+      students: { orderBy: { name: "asc" }, include: { _count: { select: { results: true } } } }, // userId — есть аккаунт
       lessons: {
         orderBy: { updatedAt: "desc" },
         include: { blocks: { orderBy: { position: "asc" }, include: { module: true } } },
@@ -78,6 +78,12 @@ export default async function ClassPage({
     where: { ownerId: session.user.id },
     orderBy: { updatedAt: "desc" },
     include: { _count: { select: { blocks: true } } },
+  });
+  // Темы библиотеки с готовыми модулями — их можно добавить в класс одной кнопкой
+  const readyTopics = await prisma.topic.findMany({
+    where: { modules: { some: {} } },
+    orderBy: [{ section: { grade: { number: "asc" } } }, { order: "asc" }],
+    include: { section: { include: { grade: true } } },
   });
 
   const lesson = classroom.lessons.find((l) => l.id === lessonParam) ?? classroom.lessons[0];
@@ -123,27 +129,20 @@ export default async function ClassPage({
             <div className="font-mono text-3xl font-extrabold tracking-[0.2em] text-ocean-800">{classroom.code}</div>
           </div>
           <div className="max-w-48 border-l border-mist-100 pl-4 text-xs text-slate-500">
-            Ученики открывают <b className="text-ocean-800">«Я ученик»</b> на сайте, вводят код и своё имя
+            Ученики вступают по коду в своём аккаунте или через <b className="text-ocean-800">«Я ученик»</b> без регистрации
           </div>
         </div>
       </header>
 
-      {classroom.lessons.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-semibold text-slate-500">Урок:</span>
-          {classroom.lessons.map((l) => (
-            <Link
-              key={l.id}
-              href={`/classes/${classroom.id}?lesson=${l.id}`}
-              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
-                l.id === lesson?.id ? "bg-ocean-700 text-white" : "bg-white text-ocean-800 ring-1 ring-mist-200 hover:ring-lagoon-500"
-              }`}
-            >
-              {l.title}
-            </Link>
-          ))}
-        </div>
-      )}
+      <ClassLessons
+        classId={classroom.id}
+        activeLessonId={lesson?.id}
+        assigned={classroom.lessons.map((l) => ({ id: l.id, title: l.title, blocks: l.blocks.length }))}
+        myOther={myLessons
+          .filter((l) => !classroom.lessons.some((x) => x.id === l.id))
+          .map((l) => ({ id: l.id, title: l.title, blocks: l._count.blocks }))}
+        topics={readyTopics.map((t) => ({ id: t.id, title: t.title, grade: t.section.grade.number, paragraph: t.paragraph, section: t.section.title }))}
+      />
 
       {lesson ? (
         <>
@@ -291,7 +290,7 @@ export default async function ClassPage({
 
               <section className="card p-5">
                 <h2 className="mb-1 font-bold text-ocean-900">Ученики и PIN-коды</h2>
-                <p className="mb-3 text-xs text-slate-500">PIN нужен ученику, чтобы снова войти под своим именем.</p>
+                <p className="mb-3 text-xs text-slate-500">PIN нужен ученикам без аккаунта, чтобы снова войти под своим именем.</p>
                 {classroom.students.length === 0 ? (
                   <p className="text-sm text-slate-500">Пока никто не вошёл.</p>
                 ) : (
@@ -299,7 +298,11 @@ export default async function ClassPage({
                     {classroom.students.map((s) => (
                       <li key={s.id} className="flex items-center justify-between py-1.5">
                         <span className="text-slate-700">{s.name}</span>
-                        <span className="font-mono text-slate-500">{s.pin}</span>
+                        {s.userId ? (
+                          <span className="pill bg-lagoon-100 text-lagoon-800" title="Входит через свой аккаунт">аккаунт</span>
+                        ) : (
+                          <span className="font-mono text-slate-500" title="PIN для быстрого входа">{s.pin}</span>
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -310,19 +313,6 @@ export default async function ClassPage({
         </>
       ) : null}
 
-      <section className="card p-5">
-        <h2 className="mb-1 font-bold text-ocean-900">Уроки класса</h2>
-        <p className="mb-3 text-sm text-slate-500">Ученики видят только назначенные уроки.</p>
-        <AssignLessons
-          classId={classroom.id}
-          lessons={myLessons.map((l) => ({
-            id: l.id,
-            title: l.title,
-            blocks: l._count.blocks,
-            assigned: classroom.lessons.some((x) => x.id === l.id),
-          }))}
-        />
-      </section>
     </main>
   );
 }

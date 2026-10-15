@@ -1,11 +1,11 @@
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { teacherSession } from "@/lib/authz";
 import { prisma } from "@/lib/db";
 import LessonBuilder from "@/components/LessonBuilder";
 
 export default async function EditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const session = await auth();
+  const session = await teacherSession();
   if (!session?.user?.id) redirect("/login");
 
   const lesson = await prisma.lesson.findUnique({

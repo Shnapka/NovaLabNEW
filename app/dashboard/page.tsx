@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { teacherSession } from "@/lib/authz";
 import { prisma } from "@/lib/db";
 import { plural } from "@/lib/plural";
 import { metaOf } from "@/lib/modules/meta";
@@ -8,7 +8,7 @@ import NewLessonButton from "@/components/NewLessonButton";
 import Icon from "@/components/Icon";
 
 export default async function Dashboard() {
-  const session = await auth();
+  const session = await teacherSession();
   if (!session?.user?.id) redirect("/login?next=/dashboard");
 
   const lessons = await prisma.lesson.findMany({

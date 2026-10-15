@@ -2,13 +2,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function StudentJoinForm() {
+// account — ученик с аккаунтом вступает в (ещё один) класс; иначе быстрый вход без аккаунта
+export default function StudentJoinForm({ account }: { account?: { name: string } }) {
   const router = useRouter();
   const [code, setCode] = useState("");
-  const [name, setName] = useState("");
+  const [name, setName] = useState(account?.name ?? "");
   const [pin, setPin] = useState("");
   const [needPin, setNeedPin] = useState(false);
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
   const [newPin, setNewPin] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -16,6 +18,7 @@ export default function StudentJoinForm() {
     e.preventDefault();
     setBusy(true);
     setError("");
+    setInfo("");
     const r = await fetch("/api/student/join", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -26,6 +29,14 @@ export default function StudentJoinForm() {
     if (!r.ok) {
       setError(data.error ?? "Ошибка");
       if (data.needPin) setNeedPin(true);
+      return;
+    }
+    if (account) {
+      setInfo(data.already ? `Ты уже в классе ${data.classroom}` : data.linked ? `Результаты перенесены, ты в классе ${data.classroom}` : `Ты вступил в класс ${data.classroom}`);
+      setCode("");
+      setPin("");
+      setNeedPin(false);
+      router.refresh();
       return;
     }
     if (data.pin) setNewPin(data.pin);
@@ -45,11 +56,11 @@ export default function StudentJoinForm() {
   }
 
   return (
-    <form onSubmit={join} className="space-y-4">
+    <form onSubmit={join} className={account ? "grid gap-3 sm:grid-cols-[160px_1fr_auto] sm:items-end" : "space-y-4"}>
       <label className="block">
         <span className="mb-1 block text-sm font-medium text-slate-700">Код класса</span>
         <input
-          className="input text-center font-mono text-2xl font-bold uppercase tracking-[0.3em]"
+          className="input text-center font-mono text-xl font-bold uppercase tracking-[0.25em]"
           placeholder="ABC123"
           maxLength={8}
           required
@@ -58,17 +69,20 @@ export default function StudentJoinForm() {
         />
       </label>
       <label className="block">
-        <span className="mb-1 block text-sm font-medium text-slate-700">Фамилия и имя</span>
+        <span className="mb-1 block text-sm font-medium text-slate-700">{account ? "Имя в классе" : "Фамилия и имя"}</span>
         <input className="input" placeholder="Иванов Пётр" required minLength={2} value={name} onChange={(e) => { setName(e.target.value); setNeedPin(false); }} />
       </label>
       {needPin && (
-        <label className="block">
+        <label className={`block ${account ? "sm:col-span-3" : ""}`}>
           <span className="mb-1 block text-sm font-medium text-slate-700">PIN-код</span>
           <input className="input text-center font-mono text-xl tracking-[0.3em]" inputMode="numeric" maxLength={4} required value={pin} onChange={(e) => setPin(e.target.value)} />
         </label>
       )}
-      {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
-      <button disabled={busy} className="btn-primary w-full py-3 text-base">{busy ? "Подождите…" : "Войти"}</button>
+      <button disabled={busy} className={account ? "btn-accent py-3" : "btn-primary w-full py-3 text-base"}>
+        {busy ? "Подождите…" : account ? "Вступить в класс" : "Войти"}
+      </button>
+      {error && <p className={`rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 ${account ? "sm:col-span-3" : ""}`}>{error}</p>}
+      {info && <p className={`rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 ${account ? "sm:col-span-3" : ""}`}>{info}</p>}
     </form>
   );
 }

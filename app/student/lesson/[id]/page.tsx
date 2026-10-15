@@ -1,15 +1,19 @@
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { getStudent } from "@/lib/student";
+import { getStudentContext, resolveStudentForLesson } from "@/lib/student";
 import StudentLesson from "@/components/StudentLesson";
 
 export default async function StudentLessonPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const student = await getStudent();
-  if (!student) redirect("/student");
+  const student = await resolveStudentForLesson(id);
+  if (!student) {
+    const ctx = await getStudentContext();
+    if (!ctx.mode) redirect("/student");
+    notFound();
+  }
 
-  const lesson = await prisma.lesson.findFirst({
-    where: { id, classrooms: { some: { id: student.classroomId } } },
+  const lesson = await prisma.lesson.findUnique({
+    where: { id },
     include: { blocks: { orderBy: { position: "asc" }, include: { module: true } } },
   });
   if (!lesson) notFound();

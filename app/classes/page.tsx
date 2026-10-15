@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { teacherSession } from "@/lib/authz";
 import { prisma } from "@/lib/db";
 import { plural } from "@/lib/plural";
 import CreateClassForm from "@/components/CreateClassForm";
 import Icon from "@/components/Icon";
 
 export default async function ClassesPage() {
-  const session = await auth();
+  const session = await teacherSession();
   if (!session?.user?.id) redirect("/login?next=/classes");
 
   const classes = await prisma.classroom.findMany({

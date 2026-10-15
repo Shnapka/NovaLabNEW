@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { getStudent } from "@/lib/student";
+import { getStudentContext, resolveStudentForLesson } from "@/lib/student";
 import { checkPractice } from "@/lib/practice";
 
 const schema = z.object({
@@ -15,12 +15,18 @@ const num = (x: unknown) => (typeof x === "number" && Number.isFinite(x) ? x : N
 
 // Приём результата от модуля урока. Оценку считает сервер: для практики — заново решает задачу ученика.
 export async function POST(req: Request) {
-  const student = await getStudent();
-  if (!student) return NextResponse.json({ error: "Войдите как ученик" }, { status: 401 });
-
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "bad data" }, { status: 400 });
   const { lessonId, moduleId, event } = parsed.data;
+
+  // Ученик с аккаунтом может состоять в нескольких классах — берём тот, которому назначен урок
+  const student = await resolveStudentForLesson(lessonId);
+  if (!student) {
+    const ctx = await getStudentContext();
+    return ctx.mode
+      ? NextResponse.json({ error: "Урок не назначен вашему классу" }, { status: 403 })
+      : NextResponse.json({ error: "Войдите как ученик" }, { status: 401 });
+  }
 
   // Урок должен быть назначен классу ученика и содержать этот модуль
   const lesson = await prisma.lesson.findFirst({

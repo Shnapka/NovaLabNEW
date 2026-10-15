@@ -29,7 +29,8 @@ function HeroArt() {
 
 export default async function Home() {
   const session = await auth();
-  const cta = session?.user ? "/library" : "/login?next=/library";
+  const isStudent = session?.user?.role === "STUDENT";
+  const cta = isStudent ? "/student" : session?.user ? "/library" : "/login?next=/library";
   const [grades, topics, ready] = await Promise.all([
     prisma.grade.count(),
     prisma.topic.count(),
@@ -56,7 +57,7 @@ export default async function Home() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href={cta} className="btn-accent px-6 py-3 text-base">
-                Открыть библиотеку <Icon name="arrowRight" />
+                {isStudent ? "К моим урокам" : "Открыть библиотеку"} <Icon name="arrowRight" />
               </Link>
               <Link href="/student" className="btn border border-white/30 px-6 py-3 text-base text-white hover:bg-white/10">
                 Я ученик — войти по коду класса

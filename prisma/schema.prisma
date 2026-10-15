@@ -10,6 +10,7 @@ datasource db {
 enum Role {
   TEACHER
   ADMIN
+  STUDENT
 }
 
 model User {
@@ -20,6 +21,7 @@ model User {
   role         Role     @default(TEACHER)
   lessons      Lesson[]
   classrooms   Classroom[]
+  memberships  Student[] // для роли STUDENT: участие в классах
   createdAt    DateTime @default(now())
 }
 
@@ -108,13 +110,16 @@ model Student {
   id          String    @id @default(cuid())
   name        String
   pin         String // 4 цифры: защищает от входа под чужим именем, учитель видит PIN в списке
-  token       String    @unique // секрет в cookie ученика
+  token       String    @unique // секрет в cookie ученика (быстрый вход без аккаунта)
+  userId      String? // аккаунт ученика, если он зарегистрирован
+  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   classroomId String
   classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
   results     Result[]
   createdAt   DateTime  @default(now())
 
   @@unique([classroomId, name])
+  @@unique([classroomId, userId])
 }
 
 // Одна попытка ученика в оцениваемом модуле
