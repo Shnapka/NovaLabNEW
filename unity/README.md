@@ -1,16 +1,72 @@
-# Файлы для Unity-проекта
+# Unity → сайт PhysLab
 
-Скопируйте папку `Assets/` из этой директории в корень вашего Unity-проекта (содержимое сольётся с существующей `Assets/`).
+## Что здесь лежит
 
-1. `Project Settings → Player → Resolution and Presentation → WebGL Template → Physlab`
-2. `Publishing Settings → Compression Format → Disabled` (на время разработки)
-3. В сцене создайте объект **ModuleRoot** и повесьте на него `FrictionModule`.
-4. `File → Build Profiles → WebGL → Build`
-5. Результат сборки (`index.html` + `Build/`) положите в `physlab/public/modules/<имя-симуляции>/`
-   и поменяйте `buildUrl` нужной симуляции (например, `archimedes-sim`) в `content/topics/*.ts`
-   с `/modules/placeholder/index.html` на свой путь, затем `npx prisma db seed`.
+| Файл | Зачем |
+|---|---|
+| `Assets/` | заготовки моста с сайтом: `ModuleBase.cs`, `Physlab.jslib`, WebGL-шаблон `Physlab`, пример модуля |
+| `PROMPT-archimedes-boat.md` | промпт для Claude Code: архитектура проекта + симуляция «Кораблик» |
+| `PROMPT-speed-race.md` | промпт для Claude Code: симуляция «Гонка на трассе» (скорость, путь, время) |
 
-Описание сцены, параметры `Init(json)` и события для каждой симуляции — на странице темы,
-блок «Техническое задание для WebGL (Unity)».
+Ключи настроек и события каждой симуляции совпадают с тем, что описано на сайте
+(страница темы → «Техническое задание для WebGL (Unity)»).
 
-Сверьте переменные `{{{ ... }}}` в шаблоне с шаблоном Minimal вашей версии Unity.
+## Как загрузить симуляцию из Unity на сайт
+
+### 1. Настройки сборки в Unity (один раз)
+
+`Edit → Project Settings → Player → вкладка WebGL`:
+
+- **Resolution and Presentation → WebGL Template = `Physlab`** — без него сайт не сможет передать симуляции
+  настройки урока и не получит от неё события.
+- **Publishing Settings → Compression Format = `Disabled`**
+  (или Brotli/Gzip, но тогда обязательно включите **Decompression Fallback**). Сжатый билд без fallback
+  на нашем сервере не запустится — команда импорта такой билд не примет.
+
+### 2. Соберите билд
+
+Через меню `PhysLab → Build WebGL → …` (его создаёт агент по промпту) или
+`File → Build Profiles → WebGL → Build`. В папке билда должны быть `index.html` и `Build/`.
+
+### 3. Подключите билд к симуляции одной командой
+
+В терминале, в папке `physlab`:
+
+```bash
+npm run unity:import -- "<папка билда>" <id модуля>
+```
+
+| Симуляция на сайте | id модуля |
+|---|---|
+| Скорость: гонка на трассе | `speed-sim` |
+| Архимедова сила: кораблик | `archimedes-sim` |
+| Кинетическая и потенциальная энергия | `energy-sim` |
+
+Например:
+
+```bash
+npm run unity:import -- "C:\Users\Asus\LabFiz\Builds\WebGL\archimedes-boat" archimedes-sim
+```
+
+Команда проверит билд (шаблон, сжатие, размер), скопирует его в `public/modules/<id модуля>/`, подключит к
+модулю и напишет ссылку на урок. Обновите страницу темы — вместо заглушки будет ваша симуляция.
+`npx prisma db seed` тоже находит билды в `public/modules/`, так что подключение не слетит.
+
+Вернуть заглушку: `npm run unity:import -- --remove <id модуля>`.
+
+### 4. Проверьте
+
+- Откройте урок, симуляция загрузилась, метки «WebGL-билд в разработке» нет.
+- Настройки урока применились: в конструкторе урока поменяйте JSON настроек симуляции и нажмите «Показать».
+- События от симуляции видны в консоли браузера (F12): `событие модуля: { type: … }`.
+
+### Если что-то не так
+
+| Симптом | Причина |
+|---|---|
+| Серый экран, в консоли ошибка про `.br`/`.gz` или «Content-Encoding» | билд сжат без Decompression Fallback — пересоберите с `Compression Format = Disabled` |
+| Симуляция работает, но игнорирует настройки урока | билд собран не из шаблона `Physlab` или в сцене нет объекта `ModuleRoot` |
+| Вместо русского текста квадраты | в шрифте нет кириллицы (TMP font asset: диапазон 0400–04FF) |
+| Билд грузится очень долго | размер > 50 МБ: уберите лишние ассеты, Managed Stripping Level = Medium/High |
+
+Сверьте переменные `{{{ ... }}}` в шаблоне `Physlab` с шаблоном Minimal вашей версии Unity.

@@ -1,7 +1,18 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { Prisma, PrismaClient } from "@prisma/client";
 import { curriculum } from "../content/curriculum";
+import type { ModuleSeed } from "../lib/modules/types";
 
 const prisma = new PrismaClient();
+
+// Если Unity-билд симуляции лежит в public/modules/<id модуля>/, подключаем его вместо заглушки
+function resolveBuildUrl(m: ModuleSeed) {
+  if (m.type === "simulation" && existsSync(join(__dirname, "..", "public", "modules", m.id, "index.html"))) {
+    return `/modules/${m.id}/index.html`;
+  }
+  return m.buildUrl ?? null;
+}
 
 // Сид идемпотентный: его можно запускать повторно после правки content/,
 // уроки учителей при этом не удаляются.
@@ -40,7 +51,7 @@ async function main() {
             title: m.title,
             description: m.description ?? null,
             order: mi,
-            buildUrl: m.buildUrl ?? null,
+            buildUrl: resolveBuildUrl(m),
             configSchema: (m.configSchema ?? {}) as Prisma.InputJsonValue,
             content: m.content as unknown as Prisma.InputJsonValue,
             topicId: topic.id,
