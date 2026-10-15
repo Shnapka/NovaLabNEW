@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>WebGL placeholder</title>
+  <style>
+    html, body { margin: 0; height: 100%; }
+    body {
+      font-family: system-ui, sans-serif; color: #e0e7ff; overflow: hidden;
+      background: radial-gradient(ellipse at 30% 20%, #312e81 0%, #0f172a 60%, #020617 100%);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .grid {
+      position: absolute; inset: 0; opacity: .25;
+      background-image: linear-gradient(#6366f1 1px, transparent 1px), linear-gradient(90deg, #6366f1 1px, transparent 1px);
+      background-size: 40px 40px;
+      transform: perspective(500px) rotateX(55deg) translateY(30%); transform-origin: bottom;
+      animation: move 4s linear infinite;
+    }
+    @keyframes move { to { background-position: 0 40px; } }
+    .card { position: relative; max-width: 80%; text-align: center; }
+    .tag { display: inline-block; font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
+      border: 1px solid #818cf8; border-radius: 999px; padding: 4px 12px; color: #a5b4fc; }
+    h1 { font-size: clamp(18px, 4vw, 30px); margin: 14px 0 6px; color: #fff; }
+    p { margin: 0 0 14px; color: #c7d2fe; font-size: 14px; }
+    #cfg { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 14px; }
+    #cfg span { background: rgba(99,102,241,.25); border-radius: 6px; padding: 3px 8px; font: 12px ui-monospace, monospace; }
+    button { background: #6366f1; color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="grid"></div>
+  <div class="card">
+    <span class="tag">WebGL · Unity</span>
+    <h1 id="title">Интерактивная симуляция</h1>
+    <p>Здесь будет 3D-симуляция. Сейчас это заглушка, которая работает по тому же контракту, что и Unity-билд.</p>
+    <div id="cfg"><span>ждём настройки от сайта…</span></div>
+    <button id="btn">Отправить тестовое событие</button>
+  </div>
+  <script>
+    var t = new URLSearchParams(location.search).get("title");
+    if (t) document.getElementById("title").textContent = t;
+    window.addEventListener("message", function (e) {
+      var d = e.data;
+      if (d && d.source === "physlab-host" && d.type === "init") {
+        var box = document.getElementById("cfg");
+        box.innerHTML = "";
+        Object.entries(d.config || {}).forEach(function (kv) {
+          var s = document.createElement("span");
+          s.textContent = kv[0] + ": " + JSON.stringify(kv[1]);
+          box.appendChild(s);
+        });
+        if (!box.children.length) box.innerHTML = "<span>настройки по умолчанию</span>";
+      }
+    });
+    document.getElementById("btn").onclick = function () {
+      parent.postMessage({ source: "physlab-module", type: "started", data: { placeholder: true } }, "*");
+    };
+    parent.postMessage({ source: "physlab-module", type: "ready" }, "*");
+  </script>
+</body>
+</html>

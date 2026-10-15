@@ -22,7 +22,8 @@ export default function LoginPage() {
     }
     const res = await signIn("credentials", { email, password, redirect: false });
     if (res?.error) return setError("Неверный email или пароль");
-    window.location.href = "/dashboard";
+    const next = new URLSearchParams(window.location.search).get("next");
+    window.location.href = next?.startsWith("/") && !next.startsWith("//") ? next : "/library";
   }
 
   const input = "w-full rounded border px-3 py-2";

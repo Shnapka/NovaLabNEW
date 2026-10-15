@@ -25,33 +25,43 @@ model User {
 model Grade {
   id       Int       @id @default(autoincrement())
   number   Int       @unique
+  textbook String? // учебник, по которому построена программа класса
   sections Section[]
 }
 
 model Section {
   id      Int     @id @default(autoincrement())
   title   String
+  order   Int     @default(0)
   gradeId Int
   grade   Grade   @relation(fields: [gradeId], references: [id])
   topics  Topic[]
+
+  @@unique([gradeId, title])
 }
 
 model Topic {
   id        Int      @id @default(autoincrement())
   title     String
+  paragraph String? // параграфы учебника, например "§ 50–51"
+  order     Int      @default(0)
   sectionId Int
   section   Section  @relation(fields: [sectionId], references: [id])
   modules   Module[]
+
+  @@unique([sectionId, title])
 }
 
 model Module {
-  id           String        @id // slug, например "friction-sim"
-  type         String        // simulation | graph | quiz | text
+  id           String        @id // slug, например "archimedes-sim"
+  type         String        // simulation | summary | graph | quiz | matching
   title        String
   description  String?
-  version      String
-  buildUrl     String        // ссылка на index.html модуля
-  configSchema Json          @default("{}")
+  order        Int           @default(0)
+  version      String        @default("1.0.0")
+  buildUrl     String?       // только для симуляций: ссылка на index.html WebGL-билда
+  configSchema Json          @default("{}") // для симуляций: настройки по умолчанию
+  content      Json          @default("{}") // контент нативных модулей (см. lib/modules/types.ts)
   topicId      Int
   topic        Topic         @relation(fields: [topicId], references: [id])
   blocks       LessonBlock[]

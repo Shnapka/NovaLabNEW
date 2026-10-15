@@ -6,7 +6,11 @@
 2. `Publishing Settings → Compression Format → Disabled` (на время разработки)
 3. В сцене создайте объект **ModuleRoot** и повесьте на него `FrictionModule`.
 4. `File → Build Profiles → WebGL → Build`
-5. Результат сборки (`index.html` + `Build/`) положите в `physlab/public/modules/friction/`
-   и поменяйте `buildUrl` модуля на `/modules/friction/index.html` (через `npx prisma studio`).
+5. Результат сборки (`index.html` + `Build/`) положите в `physlab/public/modules/<имя-симуляции>/`
+   и поменяйте `buildUrl` нужной симуляции (например, `archimedes-sim`) в `content/topics/*.ts`
+   с `/modules/placeholder/index.html` на свой путь, затем `npx prisma db seed`.
+
+Описание сцены, параметры `Init(json)` и события для каждой симуляции — на странице темы,
+блок «Техническое задание для WebGL (Unity)».
 
 Сверьте переменные `{{{ ... }}}` в шаблоне с шаблоном Minimal вашей версии Unity.

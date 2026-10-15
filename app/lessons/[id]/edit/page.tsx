@@ -16,7 +16,7 @@ export default async function EditPage({ params }: { params: Promise<{ id: strin
 
   const modules = await prisma.module.findMany({
     include: { topic: { include: { section: { include: { grade: true } } } } },
-    orderBy: { title: "asc" },
+    orderBy: [{ topicId: "asc" }, { order: "asc" }],
   });
 
   return (
@@ -33,9 +33,10 @@ export default async function EditPage({ params }: { params: Promise<{ id: strin
         title: m.title,
         type: m.type,
         topic: m.topic.title,
+        topicId: m.topicId,
         section: m.topic.section.title,
         grade: m.topic.section.grade.number,
-        schemaHint: JSON.stringify(m.configSchema),
+        defaults: JSON.stringify(m.configSchema, null, 2),
       }))}
     />
   );

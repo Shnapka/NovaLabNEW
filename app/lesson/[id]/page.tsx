@@ -17,10 +17,13 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
   return (
     <LessonPlayer
       title={lesson.title}
+      backHref={isOwner ? `/lessons/${lesson.id}/edit` : undefined}
       blocks={lesson.blocks.map((b) => ({
         id: b.id,
+        type: b.module.type,
         title: b.module.title,
-        src: b.module.buildUrl,
+        content: b.module.content,
+        buildUrl: b.module.buildUrl,
         config: b.config,
       }))}
     />

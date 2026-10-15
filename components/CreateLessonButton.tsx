@@ -1,0 +1,25 @@
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+// Копирует все модули темы в новый личный урок учителя, который можно перестроить в конструкторе
+export default function CreateLessonButton({ topicId }: { topicId: number }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  async function create() {
+    setBusy(true);
+    const r = await fetch("/api/lessons", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topicId }),
+    });
+    if (!r.ok) return setBusy(false);
+    const { id } = await r.json();
+    router.push(`/lessons/${id}/edit`);
+  }
+  return (
+    <button onClick={create} disabled={busy} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm text-white disabled:opacity-50">
+      {busy ? "Создаю…" : "+ Собрать свой урок"}
+    </button>
+  );
+}

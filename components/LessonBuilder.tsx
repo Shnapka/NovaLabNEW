@@ -1,10 +1,18 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { metaOf } from "@/lib/modules/meta";
+import Rich from "./modules/Rich";
 
 type Mod = {
-  id: string; title: string; type: string;
-  topic: string; section: string; grade: number; schemaHint: string;
+  id: string;
+  title: string;
+  type: string;
+  topic: string;
+  topicId: number;
+  section: string;
+  grade: number;
+  defaults: string;
 };
 type Block = { moduleId: string; config: string };
 
@@ -19,13 +27,31 @@ export default function LessonBuilder(props: {
   const [published, setPublished] = useState(props.initialPublished);
   const [blocks, setBlocks] = useState<Block[]>(props.initialBlocks);
   const [grade, setGrade] = useState<number | "all">("all");
+  const [section, setSection] = useState("all");
+  const [topicId, setTopicId] = useState<number | "all">("all");
   const [status, setStatus] = useState("");
 
   const byId = Object.fromEntries(props.modules.map((m) => [m.id, m]));
-  const grades = [...new Set(props.modules.map((m) => m.grade))].sort((a, b) => a - b);
-  const visible = props.modules.filter((m) => grade === "all" || m.grade === grade);
+  const uniq = <T,>(xs: T[]) => [...new Set(xs)];
+  const grades = uniq(props.modules.map((m) => m.grade)).sort((a, b) => a - b);
+  const inGrade = props.modules.filter((m) => grade === "all" || m.grade === grade);
+  const sections = uniq(inGrade.map((m) => m.section));
+  const inSection = inGrade.filter((m) => section === "all" || m.section === section);
+  const topics = uniq(inSection.map((m) => m.topicId)).map((id) => ({
+    id,
+    title: inSection.find((m) => m.topicId === id)!.topic,
+  }));
+  const visible = inSection.filter((m) => topicId === "all" || m.topicId === topicId);
 
-  const add = (m: Mod) => setBlocks([...blocks, { moduleId: m.id, config: "{}" }]);
+  const add = (m: Mod) =>
+    setBlocks([...blocks, { moduleId: m.id, config: m.type === "simulation" ? m.defaults : "{}" }]);
+  const addTopic = (id: number) =>
+    setBlocks([
+      ...blocks,
+      ...props.modules
+        .filter((m) => m.topicId === id)
+        .map((m) => ({ moduleId: m.id, config: m.type === "simulation" ? m.defaults : "{}" })),
+    ]);
   const remove = (i: number) => setBlocks(blocks.filter((_, idx) => idx !== i));
   const move = (i: number, d: number) => {
     const j = i + d;
@@ -42,7 +68,7 @@ export default function LessonBuilder(props: {
     try {
       parsed = blocks.map((b) => ({ moduleId: b.moduleId, config: JSON.parse(b.config || "{}") }));
     } catch {
-      return setStatus("Ошибка: в настройках одного из блоков некорректный JSON");
+      return setStatus("Ошибка: в настройках одной из симуляций некорректный JSON");
     }
     setStatus("Сохраняю…");
     const r = await fetch(`/api/lessons/${props.lessonId}`, {
@@ -53,25 +79,58 @@ export default function LessonBuilder(props: {
     setStatus(r.ok ? "Сохранено ✓" : "Ошибка сохранения");
   }
 
+  const select = "w-full rounded border p-2 text-sm";
+
   return (
-    <main className="mx-auto grid max-w-6xl gap-6 p-6 md:grid-cols-[320px_1fr]">
-      {/* Каталог */}
-      <aside className="rounded-lg border bg-white p-4">
-        <h2 className="mb-2 font-semibold">Модули</h2>
+    <main className="mx-auto grid max-w-6xl gap-6 p-6 md:grid-cols-[340px_1fr]">
+      {/* Модули из библиотеки */}
+      <aside className="space-y-2 rounded-xl border bg-white p-4 md:self-start">
+        <h2 className="font-semibold">Модули из библиотеки</h2>
         <select
-          className="mb-3 w-full rounded border p-2 text-sm"
+          className={select}
           value={grade}
-          onChange={(e) => setGrade(e.target.value === "all" ? "all" : Number(e.target.value))}
+          onChange={(e) => {
+            setGrade(e.target.value === "all" ? "all" : Number(e.target.value));
+            setSection("all");
+            setTopicId("all");
+          }}
         >
           <option value="all">Все классы</option>
           {grades.map((g) => <option key={g} value={g}>{g} класс</option>)}
         </select>
-        <ul className="space-y-2">
+        <select
+          className={select}
+          value={section}
+          onChange={(e) => {
+            setSection(e.target.value);
+            setTopicId("all");
+          }}
+        >
+          <option value="all">Все разделы</option>
+          {sections.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <select
+          className={select}
+          value={topicId}
+          onChange={(e) => setTopicId(e.target.value === "all" ? "all" : Number(e.target.value))}
+        >
+          <option value="all">Все темы</option>
+          {topics.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
+        </select>
+        {topicId !== "all" && (
+          <button onClick={() => addTopic(topicId)} className="w-full rounded bg-indigo-50 py-1.5 text-sm text-indigo-700">
+            + Добавить всю тему
+          </button>
+        )}
+        <ul className="max-h-[60vh] space-y-2 overflow-y-auto pt-1">
           {visible.map((m) => (
-            <li key={m.id} className="rounded border p-2 text-sm">
-              <div className="font-medium">{m.title}</div>
-              <div className="text-xs text-gray-500">{m.grade} кл. · {m.section} · {m.topic} · {m.type}</div>
-              <button onClick={() => add(m)} className="mt-1 text-blue-600">+ Добавить в урок</button>
+            <li key={m.id} className="rounded-lg border p-2 text-sm">
+              <div className="flex items-center gap-2">
+                <span className={`rounded px-1.5 py-0.5 text-xs ${metaOf(m.type).badge}`}>{metaOf(m.type).label}</span>
+                <span className="font-medium"><Rich text={m.title} /></span>
+              </div>
+              <div className="mt-0.5 text-xs text-gray-500">{m.grade} кл. · {m.topic}</div>
+              <button onClick={() => add(m)} className="mt-1 text-indigo-600">+ Добавить в урок</button>
             </li>
           ))}
         </ul>
@@ -87,10 +146,10 @@ export default function LessonBuilder(props: {
           />
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
-            Доступен по ссылке
+            Доступен ученикам по ссылке
           </label>
-          <button onClick={save} className="rounded bg-blue-600 px-4 py-2 text-white">Сохранить</button>
-          <Link href={`/lesson/${props.lessonId}`} className="text-sm text-blue-600">Показать</Link>
+          <button onClick={save} className="rounded bg-indigo-600 px-4 py-2 text-white">Сохранить</button>
+          <Link href={`/lesson/${props.lessonId}`} className="text-sm text-indigo-600">Показать</Link>
         </div>
         {status && <p className="mb-3 text-sm text-gray-600">{status}</p>}
 
@@ -99,21 +158,29 @@ export default function LessonBuilder(props: {
           {blocks.map((b, i) => {
             const m = byId[b.moduleId];
             return (
-              <li key={i} className="rounded-lg border bg-white p-4">
-                <div className="mb-2 flex items-center justify-between">
-                  <div className="font-medium">{i + 1}. {m?.title ?? b.moduleId}</div>
+              <li key={i} className="rounded-xl border bg-white p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-400">{i + 1}.</span>
+                    {m && <span className={`rounded px-1.5 py-0.5 text-xs ${metaOf(m.type).badge}`}>{metaOf(m.type).label}</span>}
+                    <span className="font-medium">{m ? <Rich text={m.title} /> : b.moduleId}</span>
+                  </div>
                   <div className="flex gap-2 text-sm">
-                    <button onClick={() => move(i, -1)}>↑</button>
-                    <button onClick={() => move(i, 1)}>↓</button>
+                    <button onClick={() => move(i, -1)} aria-label="Выше">↑</button>
+                    <button onClick={() => move(i, 1)} aria-label="Ниже">↓</button>
                     <button onClick={() => remove(i)} className="text-red-600">Удалить</button>
                   </div>
                 </div>
-                <div className="mb-1 text-xs text-gray-400">Доступные параметры: {m?.schemaHint}</div>
-                <textarea
-                  className="h-24 w-full rounded border p-2 font-mono text-xs"
-                  value={b.config}
-                  onChange={(e) => setConfig(i, e.target.value)}
-                />
+                {m?.type === "simulation" && (
+                  <details className="mt-2">
+                    <summary className="cursor-pointer text-xs text-gray-500">Настройки симуляции (JSON)</summary>
+                    <textarea
+                      className="mt-1 h-32 w-full rounded border p-2 font-mono text-xs"
+                      value={b.config}
+                      onChange={(e) => setConfig(i, e.target.value)}
+                    />
+                  </details>
+                )}
               </li>
             );
           })}
