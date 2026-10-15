@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  TEACHER
+  ADMIN
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  role         Role     @default(TEACHER)
+  lessons      Lesson[]
+  createdAt    DateTime @default(now())
+}
+
+model Grade {
+  id       Int       @id @default(autoincrement())
+  number   Int       @unique
+  sections Section[]
+}
+
+model Section {
+  id      Int     @id @default(autoincrement())
+  title   String
+  gradeId Int
+  grade   Grade   @relation(fields: [gradeId], references: [id])
+  topics  Topic[]
+}
+
+model Topic {
+  id        Int      @id @default(autoincrement())
+  title     String
+  sectionId Int
+  section   Section  @relation(fields: [sectionId], references: [id])
+  modules   Module[]
+}
+
+model Module {
+  id           String        @id // slug, например "friction-sim"
+  type         String        // simulation | graph | quiz | text
+  title        String
+  description  String?
+  version      String
+  buildUrl     String        // ссылка на index.html модуля
+  configSchema Json          @default("{}")
+  topicId      Int
+  topic        Topic         @relation(fields: [topicId], references: [id])
+  blocks       LessonBlock[]
+}
+
+model Lesson {
+  id          String        @id @default(cuid())
+  title       String
+  isPublished Boolean       @default(false)
+  ownerId     String
+  owner       User          @relation(fields: [ownerId], references: [id])
+  blocks      LessonBlock[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model LessonBlock {
+  id       String @id @default(cuid())
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  moduleId String
+  module   Module @relation(fields: [moduleId], references: [id])
+  position Int
+  config   Json   @default("{}")
+}

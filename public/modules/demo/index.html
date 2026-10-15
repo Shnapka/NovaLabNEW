@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+  <head><meta charset="utf-8"></head>
+  <body style="font-family:sans-serif;padding:20px;background:#111;color:#eee">
+    <h3>Тестовый модуль</h3>
+    <pre id="cfg">ждём настройки…</pre>
+    <button id="btn">Отправить событие «ответ»</button>
+    <script>
+      window.addEventListener("message", (e) => {
+        const d = e.data;
+        if (d && d.source === "physlab-host" && d.type === "init") {
+          document.getElementById("cfg").textContent = JSON.stringify(d.config, null, 2);
+        }
+      });
+      document.getElementById("btn").onclick = () =>
+        parent.postMessage({ source: "physlab-module", type: "answer", data: { correct: true } }, "*");
+      parent.postMessage({ source: "physlab-module", type: "ready" }, "*");
+    </script>
+  </body>
+</html>

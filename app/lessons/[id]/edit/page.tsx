@@ -1,0 +1,42 @@
+import { notFound, redirect } from "next/navigation";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/db";
+import LessonBuilder from "@/components/LessonBuilder";
+
+export default async function EditPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+
+  const lesson = await prisma.lesson.findUnique({
+    where: { id },
+    include: { blocks: { orderBy: { position: "asc" } } },
+  });
+  if (!lesson || lesson.ownerId !== session.user.id) notFound();
+
+  const modules = await prisma.module.findMany({
+    include: { topic: { include: { section: { include: { grade: true } } } } },
+    orderBy: { title: "asc" },
+  });
+
+  return (
+    <LessonBuilder
+      lessonId={lesson.id}
+      initialTitle={lesson.title}
+      initialPublished={lesson.isPublished}
+      initialBlocks={lesson.blocks.map((b) => ({
+        moduleId: b.moduleId,
+        config: JSON.stringify(b.config, null, 2),
+      }))}
+      modules={modules.map((m) => ({
+        id: m.id,
+        title: m.title,
+        type: m.type,
+        topic: m.topic.title,
+        section: m.topic.section.title,
+        grade: m.topic.section.grade.number,
+        schemaHint: JSON.stringify(m.configSchema),
+      }))}
+    />
+  );
+}
