@@ -6,7 +6,8 @@ import { fmt, type Field, type Quantity } from "@/lib/practice/common";
 import Rich from "./Rich";
 import Icon from "@/components/Icon";
 
-export type PracticeContent = { topic: string; goal?: number; intro?: string };
+import type { PracticeContent } from "@/lib/modules/types";
+export type { PracticeContent };
 
 type Task = Record<string, unknown> & { unknown: string; answerUnit: string };
 type Done = { statement: string; correct: boolean };
@@ -112,8 +113,10 @@ function FieldInput({ field, task, set }: { field: Field; task: Task; set: (k: s
 function PracticeInner({
   content,
   onEvent,
+  initialSolved = 0,
 }: {
   content: PracticeContent;
+  initialSolved?: number; // верно решено раньше (из аккаунта ученика)
   onEvent?: (e: ModuleEvent) => void;
 }) {
   const topic = PRACTICE_TOPICS[content.topic];
@@ -127,7 +130,7 @@ function PracticeInner({
 
   const validation = useMemo(() => topic.validate(task), [topic, task]);
   const statement = validation.task ? topic.describe(validation.task) : null;
-  const solvedCount = done.filter((d) => d.correct).length;
+  const solvedCount = initialSolved + done.filter((d) => d.correct).length;
 
   const set = (k: string, v: unknown) => setTask((t) => ({ ...t, [k]: v }));
   const chooseUnknown = (u: string) => setTask(topic.createTask(u));
@@ -311,7 +314,7 @@ function PracticeInner({
   );
 }
 
-export default function PracticeModule(props: { content: PracticeContent; onEvent?: (e: ModuleEvent) => void }) {
+export default function PracticeModule(props: { content: PracticeContent; initialSolved?: number; onEvent?: (e: ModuleEvent) => void }) {
   if (!PRACTICE_TOPICS[props.content?.topic]) return <p className="text-slate-500">Неизвестная тема практики: {props.content?.topic}</p>;
   return <PracticeInner {...props} />;
 }

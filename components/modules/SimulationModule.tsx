@@ -21,47 +21,56 @@ export default function SimulationModule({
 
   return (
     <div className="space-y-5">
-      <div className="relative">
-        {src ? (
-          <ModuleFrame src={src} config={config} onEvent={onEvent} />
-        ) : (
-          <div className="flex aspect-video items-center justify-center rounded-lg bg-ocean-950 text-slate-400">
-            Билд симуляции не подключён
-          </div>
-        )}
-        {isPlaceholder && (
-          <span className="absolute right-3 top-3 rounded-full bg-sun-400 px-3 py-1 text-xs font-semibold text-ocean-950 shadow">
-            WebGL-билд в разработке
-          </span>
-        )}
-      </div>
+      {src ? (
+        <ModuleFrame
+          src={src}
+          config={config}
+          onEvent={onEvent}
+          label={isPlaceholder ? "Заглушка: WebGL-билд в разработке" : "Интерактивная симуляция · можно открыть на весь экран"}
+        />
+      ) : (
+        <div className="flex aspect-video items-center justify-center rounded-lg bg-ocean-950 text-slate-400">
+          Билд симуляции не подключён
+        </div>
+      )}
 
-      <div className="rounded-lg bg-lagoon-50 p-4 text-ocean-950">
+      <div className="rounded-xl border border-sun-100 bg-sun-50 p-4 text-ocean-950">
         <span className="font-semibold">Цель: </span>
         <Rich text={content.goal} />
       </div>
 
+      <section className="rounded-xl bg-mist-50 p-4 text-slate-700">
+        <h3 className="mb-1 font-semibold text-ocean-900">Что в симуляции</h3>
+        <p><Rich text={content.scene} /></p>
+      </section>
+
       <div className="grid gap-5 lg:grid-cols-2">
         <section>
-          <h3 className="mb-2 font-semibold">Задания для учеников</h3>
+          <h3 className="mb-2 font-semibold text-ocean-900">Задания для учеников</h3>
           <ol className="list-decimal space-y-1.5 pl-5 text-slate-700">
             {content.tasks.map((t, i) => <li key={i}><Rich text={t} /></li>)}
           </ol>
         </section>
         <section>
-          <h3 className="mb-2 font-semibold">На что обратить внимание</h3>
+          <h3 className="mb-2 font-semibold text-ocean-900">На что обратить внимание</h3>
           <ul className="list-disc space-y-1.5 pl-5 text-slate-700">
             {content.observe.map((t, i) => <li key={i}><Rich text={t} /></li>)}
           </ul>
         </section>
       </div>
 
-      <details className="rounded-lg border bg-mist-50 p-4 text-sm">
-        <summary className="cursor-pointer font-semibold text-slate-700">
-          Описание сцены и техническое задание для WebGL (Unity)
-        </summary>
+      {content.notes && content.notes.length > 0 && (
+        <details className="rounded-xl border border-mist-100 p-4 text-sm">
+          <summary className="cursor-pointer font-semibold text-ocean-800">Упрощения модели — для учителя</summary>
+          <ul className="mt-3 list-disc space-y-1.5 pl-5 text-slate-700">
+            {content.notes.map((t, i) => <li key={i}><Rich text={t} /></li>)}
+          </ul>
+        </details>
+      )}
+
+      <details className="rounded-xl border border-mist-100 bg-mist-50 p-4 text-sm">
+        <summary className="cursor-pointer font-semibold text-slate-700">Параметры и события — для разработчика</summary>
         <div className="mt-3 space-y-3 text-slate-700">
-          <p><Rich text={content.scene} /></p>
           <div>
             <div className="mb-1 font-medium">Управление в симуляции</div>
             <table className="w-full">
@@ -86,7 +95,7 @@ export default function SimulationModule({
           </div>
           {content.events && (
             <div>
-              <div className="mb-1 font-medium">События модуля → сайт (Emit)</div>
+              <div className="mb-1 font-medium">События модуля → сайт</div>
               <ul className="space-y-0.5">
                 {content.events.map((e) => (
                   <li key={e.type}>

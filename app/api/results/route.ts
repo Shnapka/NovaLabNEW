@@ -89,7 +89,7 @@ export async function POST(req: Request) {
         difficulty: r.difficulty,
         solutionText: typeof d.solutionText === "string" ? d.solutionText.slice(0, 2000) : undefined,
       };
-      response = { correct: r.correct, expected: r.expected };
+      response = { correct: r.correct, expected: r.expected, answer: r.answer, unit: r.unitLabel, statement: r.statement, difficulty: r.difficulty };
       break;
     }
     default:

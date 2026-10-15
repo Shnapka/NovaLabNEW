@@ -69,12 +69,19 @@ export type SimulationContent = {
   controls: SimulationControl[];
   observe: string[];
   tasks: string[];
+  notes?: string[]; // упрощения модели — что учителю важно знать
   events?: { type: string; description: string }[];
 };
 
 // ---------- Практика «составь и реши» ----------
 // topic — ключ из lib/practice (speed, archimedes), goal — сколько задач нужно решить верно
-export type PracticeContent = { topic: string; goal?: number; intro?: string };
+export type PracticeContent = {
+  topic: string;
+  goal?: number;
+  intro?: string;
+  // Подсказки под Unity-версией практики (веб-версия показывает свои шаги сама)
+  guide?: { steps: string[]; observe: string[]; tips?: string[] };
+};
 
 export type ModuleSeed = {
   id: string;

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import LessonPlayer, { type PlayerBlock } from "./LessonPlayer";
 import type { ModuleEvent } from "./ModuleFrame";
+import PracticeLog, { type PracticeAttempt } from "./PracticeLog";
 
 // События модулей, которые идут в статистику учителя
 const GRADED_EVENTS = ["quiz-result", "matching-result", "taskResult", "challengeSummary"];
@@ -12,14 +13,17 @@ export default function StudentLesson({
   studentLabel,
   blocks,
   initialDone,
+  initialPractice,
 }: {
   lessonId: string;
   title: string;
   studentLabel: string;
   blocks: PlayerBlock[];
   initialDone: string[];
+  initialPractice: Record<string, PracticeAttempt[]>; // moduleId → задачи ученика, новые сверху
 }) {
   const [done, setDone] = useState(initialDone);
+  const [practice, setPractice] = useState(initialPractice);
   const [toast, setToast] = useState<{ ok: boolean; text: string } | null>(null);
 
   async function report(block: PlayerBlock, e: ModuleEvent) {
@@ -31,9 +35,23 @@ export default function StudentLesson({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ lessonId, moduleId, event: e }),
       });
-      if (!r.ok) throw new Error((await r.json()).error);
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error);
       setDone((d) => (d.includes(moduleId) ? d : [...d, moduleId]));
-      setToast({ ok: true, text: "Результат сохранён — учитель его увидит" });
+      if (e.type === "taskResult" && data.statement) {
+        const attempt: PracticeAttempt = {
+          id: `new-${Date.now()}`,
+          correct: !!data.correct,
+          statement: data.statement,
+          answer: data.answer,
+          expected: data.expected,
+          unit: data.unit,
+          difficulty: data.difficulty ?? 1,
+          at: new Date().toISOString(),
+        };
+        setPractice((p) => ({ ...p, [moduleId]: [attempt, ...(p[moduleId] ?? [])] }));
+      }
+      setToast({ ok: true, text: "Результат сохранён — он в твоей статистике, учитель его увидит" });
     } catch (err) {
       setToast({ ok: false, text: `Не удалось сохранить результат${err instanceof Error && err.message ? `: ${err.message}` : ""}` });
     }
@@ -42,7 +60,22 @@ export default function StudentLesson({
 
   return (
     <>
-      <LessonPlayer title={title} subtitle={studentLabel} blocks={blocks} backHref="/student" doneIds={done} onModuleEvent={report} />
+      <LessonPlayer
+        title={title}
+        subtitle={studentLabel}
+        blocks={blocks}
+        backHref="/student"
+        doneIds={done}
+        onModuleEvent={report}
+        renderBelow={(b) =>
+          b.type === "practice" && b.moduleId ? (
+            <PracticeLog
+              attempts={practice[b.moduleId] ?? []}
+              goal={Number((b.content as { goal?: number } | null)?.goal ?? 3)}
+            />
+          ) : null
+        }
+      />
       {toast && (
         <div
           role="status"

@@ -12,7 +12,9 @@ import GraphModule from "./GraphModule";
 import QuizModule from "./QuizModule";
 import MatchingModule from "./MatchingModule";
 import SimulationModule from "./SimulationModule";
-import PracticeModule, { type PracticeContent } from "./PracticeModule";
+import PracticeModule from "./PracticeModule";
+import PracticeUnity from "./PracticeUnity";
+import type { PracticeContent } from "@/lib/modules/types";
 
 export type RenderableModule = {
   type: string;
@@ -41,9 +43,13 @@ export default function ModuleRenderer({
     case "practice":
       // Если подключён Unity-билд практики — показываем его, иначе встроенный веб-конструктор задач
       return m.buildUrl && !m.buildUrl.includes("/modules/placeholder/") ? (
-        <ModuleFrame src={m.buildUrl} config={{ ...(m.config as object), topic: (m.content as PracticeContent).topic }} onEvent={onEvent} />
+        <PracticeUnity buildUrl={m.buildUrl} content={m.content as PracticeContent} config={m.config} onEvent={onEvent} />
       ) : (
-        <PracticeModule content={m.content as PracticeContent} onEvent={onEvent} />
+        <PracticeModule
+          content={m.content as PracticeContent}
+          initialSolved={Number((m.config as { progress?: { solved?: number } } | null)?.progress?.solved ?? 0)}
+          onEvent={onEvent}
+        />
       );
     case "simulation":
       return (

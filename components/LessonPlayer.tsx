@@ -18,6 +18,7 @@ export default function LessonPlayer({
   subtitle,
   doneIds = [],
   onModuleEvent,
+  renderBelow,
 }: {
   title: string;
   blocks: B[];
@@ -25,6 +26,7 @@ export default function LessonPlayer({
   subtitle?: React.ReactNode;
   doneIds?: string[]; // модули, где ученик уже получил результат
   onModuleEvent?: (block: B, e: ModuleEvent) => void;
+  renderBelow?: (block: B) => React.ReactNode; // доп. блок под модулем (например, работа ученика)
 }) {
   const [i, setI] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -98,6 +100,7 @@ export default function LessonPlayer({
           <h2 className="mb-5 text-2xl font-extrabold text-ocean-900"><Rich text={b.title} /></h2>
           {/* key заставляет создать модуль заново: старый Unity-инстанс уничтожается */}
           <ModuleRenderer key={b.id} module={b} onEvent={(e) => (onModuleEvent ? onModuleEvent(b, e) : console.log("событие модуля:", e))} />
+          {renderBelow?.(b)}
         </section>
 
         <div className="mt-5 flex items-center justify-between">
