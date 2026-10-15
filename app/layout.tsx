@@ -1,35 +1,44 @@
 import "./globals.css";
 import Link from "next/link";
+import { Manrope } from "next/font/google";
 import { auth, signOut } from "@/auth";
+import NavLinks from "@/components/NavLinks";
+import { Logo } from "@/components/Icon";
+
+const manrope = Manrope({ subsets: ["latin", "cyrillic"], variable: "--font-manrope" });
 
 export const metadata = { title: "PhysLab", description: "Библиотека интерактивных уроков физики для учителей" };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
+  const name = session?.user?.name ?? session?.user?.email ?? "";
   return (
-    <html lang="ru">
-      <body className="min-h-screen bg-gray-50 text-gray-900">
-        <header className="flex items-center gap-5 border-b bg-white px-6 py-3">
-          <Link href="/" className="text-lg font-bold">
-            Phys<span className="text-indigo-600">Lab</span>
-          </Link>
-          {session?.user && (
-            <>
-              <Link href="/library" className="text-sm hover:underline">Библиотека</Link>
-              <Link href="/dashboard" className="text-sm hover:underline">Мои уроки</Link>
-            </>
-          )}
-          <div className="ml-auto flex items-center gap-4 text-sm">
-            {session?.user ? (
-              <>
-                <span className="hidden text-gray-500 sm:inline">{session.user.name ?? session.user.email}</span>
-                <form action={async () => { "use server"; await signOut({ redirectTo: "/" }); }}>
-                  <button className="text-gray-500 hover:underline">Выйти</button>
-                </form>
-              </>
-            ) : (
-              <Link href="/login" className="rounded bg-indigo-600 px-3 py-1 text-white">Войти</Link>
-            )}
+    <html lang="ru" className={manrope.variable}>
+      <body className="min-h-screen font-sans">
+        <header className="sticky top-0 z-30 bg-ocean-700 shadow-[0_2px_12px_rgba(1,62,86,0.25)]">
+          <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:gap-6 sm:px-6">
+            <Link href="/" className="flex items-center gap-2 text-lg font-extrabold tracking-tight text-white">
+              <Logo />
+              <span className="hidden sm:inline">Phys<span className="text-sun-400">Lab</span></span>
+            </Link>
+            {session?.user && <NavLinks />}
+            <div className="ml-auto flex shrink-0 items-center gap-3 text-sm">
+              {session?.user ? (
+                <>
+                  <span className="hidden items-center gap-2 text-aqua-200 md:flex">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-sun-400 text-xs font-bold text-ocean-950">
+                      {name.slice(0, 1).toUpperCase()}
+                    </span>
+                    {name}
+                  </span>
+                  <form action={async () => { "use server"; await signOut({ redirectTo: "/" }); }}>
+                    <button className="rounded-lg px-3 py-1.5 text-aqua-200 transition hover:bg-white/10 hover:text-white">Выйти</button>
+                  </form>
+                </>
+              ) : (
+                <Link href="/login" className="btn-accent">Войти</Link>
+              )}
+            </div>
           </div>
         </header>
         {children}

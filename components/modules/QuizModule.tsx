@@ -55,8 +55,8 @@ export default function QuizModule({
     const pct = Math.round((score / qs.length) * 100);
     return (
       <div className="space-y-4 py-6 text-center">
-        <div className="text-5xl font-bold text-indigo-600">{score} / {qs.length}</div>
-        <p className="text-gray-700">
+        <div className="text-5xl font-bold text-ocean-700">{score} / {qs.length}</div>
+        <p className="text-slate-700">
           {pct >= 85 ? "Отлично! Тема усвоена." : pct >= 60 ? "Хорошо, но есть что повторить." : "Стоит ещё раз прочитать конспект и поработать с симуляцией."}
         </p>
         <div className="mx-auto flex max-w-md flex-wrap justify-center gap-1">
@@ -64,7 +64,7 @@ export default function QuizModule({
             <span key={k} className={`h-3 w-8 rounded ${r ? "bg-emerald-500" : "bg-rose-400"}`} title={`Вопрос ${k + 1}`} />
           ))}
         </div>
-        <button onClick={restart} className="rounded bg-indigo-600 px-5 py-2 text-white">Пройти ещё раз</button>
+        <button onClick={restart} className="btn-primary">Пройти ещё раз</button>
       </div>
     );
   }
@@ -79,28 +79,28 @@ export default function QuizModule({
           <span
             key={k}
             className={`h-2 flex-1 rounded ${
-              k < results.length ? (results[k] ? "bg-emerald-500" : "bg-rose-400") : k === i ? "bg-indigo-400" : "bg-gray-200"
+              k < results.length ? (results[k] ? "bg-emerald-500" : "bg-rose-400") : k === i ? "bg-lagoon-500" : "bg-mist-100"
             }`}
           />
         ))}
       </div>
-      <div className="text-sm text-gray-500">Вопрос {i + 1} из {qs.length}</div>
-      <h3 className="text-lg font-medium"><Rich text={q.text} /></h3>
+      <div className="text-sm text-slate-500">Вопрос {i + 1} из {qs.length}</div>
+      <h3 className="text-lg font-bold text-ocean-900"><Rich text={q.text} /></h3>
 
       {q.kind === "single" ? (
         <div className="grid gap-2">
           {q.options.map((opt, k) => {
             const picked = answer === k;
-            let cls = "border-gray-200 hover:border-indigo-400";
+            let cls = "border-mist-200 hover:border-lagoon-500";
             if (checked && k === q.answer) cls = "border-emerald-500 bg-emerald-50";
             else if (checked && picked) cls = "border-rose-400 bg-rose-50";
-            else if (picked) cls = "border-indigo-500 bg-indigo-50";
+            else if (picked) cls = "border-ocean-600 bg-lagoon-50";
             return (
               <button
                 key={k}
                 disabled={checked}
                 onClick={() => setAnswer(k)}
-                className={`rounded-lg border-2 px-4 py-2 text-left transition ${cls}`}
+                className={`rounded-xl border-2 px-4 py-3 text-left font-medium transition ${cls}`}
               >
                 <Rich text={opt} />
               </button>
@@ -112,13 +112,13 @@ export default function QuizModule({
           <input
             inputMode="decimal"
             disabled={checked}
-            className="w-40 rounded-lg border-2 px-3 py-2 font-mono"
+            className="input w-44 font-mono"
             placeholder="Ответ"
             value={answer ?? ""}
             onChange={(e) => setAnswer(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !checked && check()}
           />
-          <span className="text-gray-600">{q.unit}</span>
+          <span className="text-slate-600">{q.unit}</span>
         </div>
       )}
 
@@ -136,14 +136,14 @@ export default function QuizModule({
           <button
             onClick={check}
             disabled={answer === null || answer === ""}
-            className="rounded bg-indigo-600 px-5 py-2 text-white disabled:opacity-40"
+            className="btn-primary disabled:opacity-40"
           >
             Проверить
           </button>
         ) : i < qs.length - 1 ? (
-          <button onClick={next} className="rounded bg-indigo-600 px-5 py-2 text-white">Следующий вопрос →</button>
+          <button onClick={next} className="btn-primary">Следующий вопрос →</button>
         ) : (
-          <button onClick={() => setChecked(false)} className="rounded bg-indigo-600 px-5 py-2 text-white">Результаты</button>
+          <button onClick={() => setChecked(false)} className="btn-primary">Результаты</button>
         )}
       </div>
     </div>

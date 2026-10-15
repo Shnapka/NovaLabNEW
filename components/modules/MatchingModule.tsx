@@ -59,8 +59,8 @@ export default function MatchingModule({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-        <span className="text-gray-600">{content.instruction ?? "Сопоставь карточки."}</span>
-        <span className="text-gray-500">
+        <span className="text-slate-600">{content.instruction ?? "Сопоставь карточки."}</span>
+        <span className="text-slate-500">
           Пар: {matched.length}/{n} · Ошибок: {mistakes}
         </span>
       </div>
@@ -71,7 +71,7 @@ export default function MatchingModule({
           <div className="text-sm">
             {mistakes === 0 ? "Без единой ошибки — отлично!" : `Ошибок: ${mistakes}. Попробуй пройти ещё раз без ошибок.`}
           </div>
-          <button onClick={reset} className="mt-2 rounded bg-emerald-600 px-4 py-1.5 text-sm text-white">Перемешать и сыграть снова</button>
+          <button onClick={reset} className="mt-2 btn-primary mt-3">Перемешать и сыграть снова</button>
         </div>
       )}
 
@@ -88,8 +88,8 @@ export default function MatchingModule({
                   isMatched
                     ? "border-emerald-300 bg-emerald-50 text-emerald-800"
                     : picked === l
-                      ? "border-indigo-500 bg-indigo-50"
-                      : "border-gray-200 bg-white hover:border-indigo-300"
+                      ? "border-ocean-600 bg-lagoon-50"
+                      : "border-mist-200 bg-white hover:border-lagoon-200"
                 }`}
               >
                 <Rich text={content.pairs[l].left} />
@@ -111,8 +111,8 @@ export default function MatchingModule({
                     : wrong === r
                       ? "animate-pulse border-rose-400 bg-rose-50"
                       : picked !== null
-                        ? "border-gray-200 bg-white hover:border-indigo-400"
-                        : "border-gray-200 bg-white"
+                        ? "border-mist-200 bg-white hover:border-lagoon-500"
+                        : "border-mist-200 bg-white"
                 }`}
               >
                 <Rich text={content.pairs[r].right} />

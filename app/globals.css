@@ -1,5 +1,81 @@
 @import "tailwindcss";
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
+/* Палитра PhysLab:
+   ocean  #01597B — основной (шапка, кнопки, акценты)
+   lagoon #5DB3C1 — вторичный (графики, ссылки, фокус)
+   aqua   #99D8DE — светлый акцент (подложки, декор)
+   mist   #E2E8ED — нейтральный фон и границы
+   sun    #F2BA00 — призыв к действию и «главное» */
+@theme {
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+
+  --color-ocean-50: #e8f2f6;
+  --color-ocean-100: #c9e0ea;
+  --color-ocean-500: #2486a8;
+  --color-ocean-600: #0a6f94;
+  --color-ocean-700: #01597b;
+  --color-ocean-800: #014b68;
+  --color-ocean-900: #013e56;
+  --color-ocean-950: #002c3d;
+
+  --color-lagoon-50: #eef8fa;
+  --color-lagoon-100: #d8eff3;
+  --color-lagoon-200: #b5e2e8;
+  --color-lagoon-500: #5db3c1;
+  --color-lagoon-600: #3f9aa8;
+  --color-lagoon-700: #2d7d8a;
+  --color-lagoon-800: #22626c;
+
+  --color-aqua-100: #e0f3f5;
+  --color-aqua-200: #c6ebef;
+  --color-aqua-300: #99d8de;
+
+  --color-mist-50: #f4f7f9;
+  --color-mist-100: #e2e8ed;
+  --color-mist-200: #cbd5dd;
+  --color-mist-300: #a9b7c2;
+
+  --color-sun-50: #fef8e6;
+  --color-sun-100: #fcedb8;
+  --color-sun-400: #f2ba00;
+  --color-sun-500: #dba800;
+  --color-sun-600: #b88a00;
+  --color-sun-900: #4d3a00;
+}
+
+@layer base {
+  *, ::before, ::after {
+    border-color: var(--color-mist-100);
+  }
+  body {
+    @apply bg-mist-50 text-slate-800 antialiased;
+  }
+  ::selection {
+    @apply bg-aqua-300 text-ocean-950;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-lagoon-500;
+  }
+}
+
+@utility card {
+  @apply rounded-2xl border border-mist-100 bg-white shadow-[0_1px_2px_rgba(1,89,123,0.04),0_4px_16px_rgba(1,89,123,0.05)];
+}
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40;
+}
+@utility btn-primary {
+  @apply btn bg-ocean-700 text-white hover:bg-ocean-800 active:bg-ocean-900;
+}
+@utility btn-accent {
+  @apply btn bg-sun-400 text-ocean-950 shadow-sm hover:bg-sun-500;
+}
+@utility btn-ghost {
+  @apply btn border border-mist-200 bg-white text-ocean-800 hover:border-lagoon-500 hover:bg-lagoon-50;
+}
+@utility input {
+  @apply w-full rounded-xl border border-mist-200 bg-white px-3.5 py-2.5 text-slate-800 transition placeholder:text-mist-300 focus:border-lagoon-500 focus:outline-none focus:ring-4 focus:ring-lagoon-100;
+}
+@utility pill {
+  @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
 }

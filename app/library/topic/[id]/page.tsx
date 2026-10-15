@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { MODULE_META, TYPE_ORDER } from "@/lib/modules/meta";
 import TopicView from "@/components/TopicView";
 import CreateLessonButton from "@/components/CreateLessonButton";
+import Icon from "@/components/Icon";
 
 export default async function TopicPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -18,29 +19,34 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
   const grade = topic.section.grade;
 
   return (
-    <main className="mx-auto max-w-7xl space-y-6 p-6">
-      <nav className="text-sm text-gray-500">
-        <Link href="/library" className="hover:underline">Библиотека</Link> /{" "}
-        <Link href={`/library/${grade.number}`} className="hover:underline">{grade.number} класс</Link> / {topic.section.title}
+    <main className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6">
+      <nav className="text-sm text-slate-500">
+        <Link href="/library" className="hover:text-ocean-700">Библиотека</Link>
+        <span className="mx-2 text-mist-300">/</span>
+        <Link href={`/library/${grade.number}`} className="hover:text-ocean-700">{grade.number} класс</Link>
+        <span className="mx-2 text-mist-300">/</span>
+        <Link href={`/library/${grade.number}#section-${topic.section.id}`} className="hover:text-ocean-700">{topic.section.title}</Link>
       </nav>
 
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">{topic.title}</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            {topic.paragraph && <span className="mr-2 font-mono">{topic.paragraph}</span>}
-            {grade.textbook}
-          </p>
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            {topic.paragraph && <span className="pill bg-sun-100 text-sun-900">{topic.paragraph}</span>}
+            <span className="flex items-center gap-1 text-sm text-slate-500">
+              <Icon name="book" className="h-4 w-4" /> {grade.textbook}
+            </span>
+          </div>
+          <h1 className="mt-2 text-3xl font-extrabold text-ocean-900 sm:text-4xl">{topic.title}</h1>
         </div>
         {topic.modules.length > 0 && (
-          <div className="flex gap-2">
-            <Link href={`/library/topic/${topic.id}/present`} className="rounded-lg border bg-white px-4 py-2 text-sm hover:bg-gray-50">
-              ▶ Показать классу
+          <div className="flex flex-wrap gap-2">
+            <Link href={`/library/topic/${topic.id}/present`} className="btn-ghost">
+              <Icon name="play" className="h-4 w-4" /> Показать классу
             </Link>
             <CreateLessonButton topicId={topic.id} />
           </div>
         )}
-      </div>
+      </header>
 
       {topic.modules.length > 0 ? (
         <TopicView
@@ -55,16 +61,22 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
           }))}
         />
       ) : (
-        <div className="rounded-xl border border-dashed bg-white p-10 text-center">
-          <div className="text-lg font-semibold">Модули для этой темы в разработке</div>
-          <p className="mt-1 text-gray-500">Планируемый состав урока:</p>
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
+        <div className="card flex flex-col items-center px-6 py-14 text-center">
+          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-aqua-100 text-ocean-700">
+            <Icon name="layers" className="h-7 w-7" />
+          </span>
+          <h2 className="mt-4 text-xl font-bold text-ocean-900">Модули для этой темы в разработке</h2>
+          <p className="mt-1 max-w-md text-slate-500">Урок будет состоять из пяти модулей. Пока можно выбрать готовую тему в библиотеке.</p>
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
             {TYPE_ORDER.map((t) => (
-              <span key={t} className={`rounded-full px-3 py-1 text-sm ${MODULE_META[t].badge}`}>
-                {MODULE_META[t].label}
+              <span key={t} className={`pill py-1 ${MODULE_META[t].badge}`}>
+                <Icon name={t} className="h-3.5 w-3.5" /> {MODULE_META[t].label}
               </span>
             ))}
           </div>
+          <Link href={`/library/${grade.number}`} className="btn-primary mt-8">
+            <Icon name="arrowLeft" className="h-4 w-4" /> К темам {grade.number} класса
+          </Link>
         </div>
       )}
     </main>

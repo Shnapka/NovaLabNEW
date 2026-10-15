@@ -4,7 +4,8 @@ import type { GraphChart, GraphContent } from "@/lib/modules/types";
 import { compile, fmt } from "@/lib/modules/expr";
 import Rich from "./Rich";
 
-const COLORS = ["#2563eb", "#dc2626", "#059669", "#d97706"];
+// Палитра: ocean, sun (затемнён для контраста на белом), lagoon, коралловый
+const COLORS = ["#01597B", "#DBA800", "#3F9AA8", "#E0525B"];
 const W = 640;
 const H = 340;
 const PAD = { l: 52, r: 16, t: 14, b: 32 };
@@ -73,20 +74,20 @@ function Chart({ chart }: { chart: GraphChart }) {
   return (
     <section className="space-y-3">
       <div>
-        <h3 className="text-lg font-semibold"><Rich text={chart.title} /></h3>
-        {chart.description && <p className="text-sm text-gray-600"><Rich text={chart.description} /></p>}
+        <h3 className="text-lg font-bold text-ocean-900"><Rich text={chart.title} /></h3>
+        {chart.description && <p className="text-sm text-slate-600"><Rich text={chart.description} /></p>}
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
         {chart.params.map((p) => (
-          <label key={p.key} className="block rounded-lg border bg-gray-50 px-3 py-2 text-sm">
+          <label key={p.key} className="block rounded-xl border border-mist-100 bg-mist-50 px-3 py-2 text-sm">
             <div className="flex justify-between">
               <span><Rich text={p.label} /></span>
               <span className="font-mono font-semibold">{fmt(vals[p.key])} {p.unit}</span>
             </div>
             <input
               type="range"
-              className="w-full accent-indigo-600"
+              className="w-full accent-ocean-700"
               min={p.min}
               max={p.max}
               step={p.step}
@@ -97,8 +98,8 @@ function Chart({ chart }: { chart: GraphChart }) {
         ))}
       </div>
 
-      <div className="relative rounded-lg border bg-white p-2">
-        <div className="absolute left-3 top-1 text-xs font-medium text-gray-500">
+      <div className="relative rounded-xl border border-mist-100 bg-white p-2">
+        <div className="absolute left-3 top-1 text-xs font-medium text-slate-500">
           <Rich text={chart.y.label} />, {chart.y.unit}
         </div>
         <svg
@@ -115,18 +116,18 @@ function Chart({ chart }: { chart: GraphChart }) {
           </defs>
           {ticks(0, yMax).map((v) => (
             <g key={"y" + v}>
-              <line x1={PAD.l} x2={W - PAD.r} y1={sy(v)} y2={sy(v)} stroke="#e5e7eb" />
-              <text x={PAD.l - 6} y={sy(v) + 4} textAnchor="end" fontSize="11" fill="#6b7280">{fmt(v)}</text>
+              <line x1={PAD.l} x2={W - PAD.r} y1={sy(v)} y2={sy(v)} stroke="#E2E8ED" />
+              <text x={PAD.l - 6} y={sy(v) + 4} textAnchor="end" fontSize="11" fill="#64748b">{fmt(v)}</text>
             </g>
           ))}
           {ticks(xMin, xMax).map((v) => (
             <g key={"x" + v}>
-              <line x1={sx(v)} x2={sx(v)} y1={PAD.t} y2={H - PAD.b} stroke="#f3f4f6" />
-              <text x={sx(v)} y={H - PAD.b + 16} textAnchor="middle" fontSize="11" fill="#6b7280">{fmt(v)}</text>
+              <line x1={sx(v)} x2={sx(v)} y1={PAD.t} y2={H - PAD.b} stroke="#EEF2F5" />
+              <text x={sx(v)} y={H - PAD.b + 16} textAnchor="middle" fontSize="11" fill="#64748b">{fmt(v)}</text>
             </g>
           ))}
-          <line x1={PAD.l} x2={W - PAD.r} y1={sy(0)} y2={sy(0)} stroke="#9ca3af" />
-          <line x1={PAD.l} x2={PAD.l} y1={PAD.t} y2={H - PAD.b} stroke="#9ca3af" />
+          <line x1={PAD.l} x2={W - PAD.r} y1={sy(0)} y2={sy(0)} stroke="#A9B7C2" />
+          <line x1={PAD.l} x2={PAD.l} y1={PAD.t} y2={H - PAD.b} stroke="#A9B7C2" />
 
           <g clipPath={`url(#${clipId})`}>
             {paths.map((segs, i) =>
@@ -151,7 +152,7 @@ function Chart({ chart }: { chart: GraphChart }) {
 
           {shownX !== null && (
             <g>
-              <line x1={sx(shownX)} x2={sx(shownX)} y1={PAD.t} y2={H - PAD.b} stroke="#111827" strokeDasharray="4 3" />
+              <line x1={sx(shownX)} x2={sx(shownX)} y1={PAD.t} y2={H - PAD.b} stroke="#013E56" strokeDasharray="4 3" />
               {fns.map((_, i) => {
                 const y = at(i, shownX);
                 return Number.isFinite(y) && y <= yMax ? (
@@ -161,7 +162,7 @@ function Chart({ chart }: { chart: GraphChart }) {
             </g>
           )}
         </svg>
-        <div className="absolute bottom-1 right-3 text-xs font-medium text-gray-500">
+        <div className="absolute bottom-1 right-3 text-xs font-medium text-slate-500">
           <Rich text={chart.x.label} />, {chart.x.unit}
         </div>
       </div>
@@ -173,16 +174,16 @@ function Chart({ chart }: { chart: GraphChart }) {
             <span key={i} className="flex items-center gap-1.5">
               <span className="inline-block h-1 w-5 rounded" style={{ background: COLORS[i % COLORS.length] }} />
               <Rich text={s.label} />
-              {shownX !== null && <span className="font-mono text-gray-600">= {fmt(y)} {chart.y.unit}</span>}
+              {shownX !== null && <span className="font-mono text-slate-600">= {fmt(y)} {chart.y.unit}</span>}
             </span>
           );
         })}
         {shownX !== null && (
-          <span className="font-mono text-gray-500">
+          <span className="font-mono text-slate-500">
             при <Rich text={chart.x.label} /> = {fmt(shownX, 1)} {chart.x.unit}
           </span>
         )}
-        {shownX === null && <span className="text-gray-400">Наведи курсор на график, чтобы увидеть значения</span>}
+        {shownX === null && <span className="text-slate-400">Наведи курсор на график, чтобы увидеть значения</span>}
       </div>
 
       {chart.readouts && chart.readouts.length > 0 && (
@@ -196,7 +197,7 @@ function Chart({ chart }: { chart: GraphChart }) {
       )}
 
       {chart.question && (
-        <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3 text-sm text-indigo-950">
+        <div className="rounded-lg border border-lagoon-200 bg-lagoon-50 p-3 text-sm text-ocean-950">
           <span className="font-semibold">Вопрос: </span>
           <Rich text={chart.question} />
         </div>

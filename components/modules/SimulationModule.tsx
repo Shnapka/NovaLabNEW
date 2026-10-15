@@ -25,18 +25,18 @@ export default function SimulationModule({
         {src ? (
           <ModuleFrame src={src} config={config} onEvent={onEvent} />
         ) : (
-          <div className="flex aspect-video items-center justify-center rounded-lg bg-gray-900 text-gray-400">
+          <div className="flex aspect-video items-center justify-center rounded-lg bg-ocean-950 text-slate-400">
             Билд симуляции не подключён
           </div>
         )}
         {isPlaceholder && (
-          <span className="absolute right-3 top-3 rounded-full bg-amber-400 px-3 py-1 text-xs font-semibold text-amber-950 shadow">
+          <span className="absolute right-3 top-3 rounded-full bg-sun-400 px-3 py-1 text-xs font-semibold text-ocean-950 shadow">
             WebGL-билд в разработке
           </span>
         )}
       </div>
 
-      <div className="rounded-lg bg-indigo-50 p-4 text-indigo-950">
+      <div className="rounded-lg bg-lagoon-50 p-4 text-ocean-950">
         <span className="font-semibold">Цель: </span>
         <Rich text={content.goal} />
       </div>
@@ -44,23 +44,23 @@ export default function SimulationModule({
       <div className="grid gap-5 lg:grid-cols-2">
         <section>
           <h3 className="mb-2 font-semibold">Задания для учеников</h3>
-          <ol className="list-decimal space-y-1.5 pl-5 text-gray-800">
+          <ol className="list-decimal space-y-1.5 pl-5 text-slate-700">
             {content.tasks.map((t, i) => <li key={i}><Rich text={t} /></li>)}
           </ol>
         </section>
         <section>
           <h3 className="mb-2 font-semibold">На что обратить внимание</h3>
-          <ul className="list-disc space-y-1.5 pl-5 text-gray-800">
+          <ul className="list-disc space-y-1.5 pl-5 text-slate-700">
             {content.observe.map((t, i) => <li key={i}><Rich text={t} /></li>)}
           </ul>
         </section>
       </div>
 
-      <details className="rounded-lg border bg-gray-50 p-4 text-sm">
-        <summary className="cursor-pointer font-semibold text-gray-700">
+      <details className="rounded-lg border bg-mist-50 p-4 text-sm">
+        <summary className="cursor-pointer font-semibold text-slate-700">
           Описание сцены и техническое задание для WebGL (Unity)
         </summary>
-        <div className="mt-3 space-y-3 text-gray-700">
+        <div className="mt-3 space-y-3 text-slate-700">
           <p><Rich text={content.scene} /></p>
           <div>
             <div className="mb-1 font-medium">Управление в симуляции</div>
@@ -68,9 +68,9 @@ export default function SimulationModule({
               <tbody>
                 {content.controls.map((c) => (
                   <tr key={c.key} className="border-b last:border-0">
-                    <td className="py-1 pr-3 font-mono text-xs text-indigo-700">{c.key}</td>
+                    <td className="py-1 pr-3 font-mono text-xs text-ocean-700">{c.key}</td>
                     <td className="py-1 pr-3"><Rich text={c.label} /></td>
-                    <td className="py-1 text-gray-500">
+                    <td className="py-1 text-slate-500">
                       {c.kind === "slider" && `слайдер ${c.min}…${c.max} ${c.unit ?? ""}`}
                       {c.kind === "toggle" && "переключатель"}
                       {c.kind === "select" && c.options?.map((o) => o.label).join(" / ")}
@@ -90,7 +90,7 @@ export default function SimulationModule({
               <ul className="space-y-0.5">
                 {content.events.map((e) => (
                   <li key={e.type}>
-                    <span className="font-mono text-xs text-indigo-700">{e.type}</span> — {e.description}
+                    <span className="font-mono text-xs text-ocean-700">{e.type}</span> — {e.description}
                   </li>
                 ))}
               </ul>

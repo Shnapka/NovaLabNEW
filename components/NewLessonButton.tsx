@@ -1,5 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
+import Icon from "./Icon";
 
 export default function NewLessonButton() {
   const router = useRouter();
@@ -9,8 +10,8 @@ export default function NewLessonButton() {
     router.push(`/lessons/${id}/edit`);
   }
   return (
-    <button onClick={create} className="rounded bg-blue-600 px-4 py-2 text-white">
-      + Новый урок
+    <button onClick={create} className="btn-accent">
+      <Icon name="plus" className="h-4 w-4" /> Пустой урок
     </button>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Icon from "./Icon";
 
 // Копирует все модули темы в новый личный урок учителя, который можно перестроить в конструкторе
 export default function CreateLessonButton({ topicId }: { topicId: number }) {
@@ -18,8 +19,9 @@ export default function CreateLessonButton({ topicId }: { topicId: number }) {
     router.push(`/lessons/${id}/edit`);
   }
   return (
-    <button onClick={create} disabled={busy} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm text-white disabled:opacity-50">
-      {busy ? "Создаю…" : "+ Собрать свой урок"}
+    <button onClick={create} disabled={busy} className="btn-accent" title="Скопировать модули темы в свой урок и настроить его">
+      <Icon name="plus" className="h-4 w-4" />
+      {busy ? "Создаю…" : "Собрать свой урок"}
     </button>
   );
 }

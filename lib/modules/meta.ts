@@ -1,16 +1,38 @@
-export const MODULE_META: Record<string, { label: string; badge: string; hint: string }> = {
+// badge — метка типа; tile — плитка с иконкой
+export const MODULE_META: Record<string, { label: string; badge: string; tile: string; hint: string }> = {
   simulation: {
     label: "Симуляция",
-    badge: "bg-indigo-100 text-indigo-700",
+    badge: "bg-ocean-700 text-white",
+    tile: "bg-ocean-700 text-sun-400",
     hint: "Интерактивный WebGL-эксперимент",
   },
-  summary: { label: "Конспект", badge: "bg-amber-100 text-amber-800", hint: "Краткая теория, формулы, примеры" },
-  graph: { label: "Графики", badge: "bg-emerald-100 text-emerald-700", hint: "Интерактивные графики зависимостей" },
-  quiz: { label: "Квиз", badge: "bg-rose-100 text-rose-700", hint: "Вопросы и задачи на закрепление" },
-  matching: { label: "Карточки", badge: "bg-sky-100 text-sky-700", hint: "Игра на сопоставление" },
+  summary: {
+    label: "Конспект",
+    badge: "bg-sun-100 text-sun-900",
+    tile: "bg-sun-100 text-sun-600",
+    hint: "Краткая теория, формулы, примеры",
+  },
+  graph: {
+    label: "Графики",
+    badge: "bg-lagoon-100 text-lagoon-800",
+    tile: "bg-lagoon-100 text-lagoon-700",
+    hint: "Интерактивные графики зависимостей",
+  },
+  quiz: {
+    label: "Квиз",
+    badge: "bg-aqua-200 text-ocean-900",
+    tile: "bg-aqua-200 text-ocean-700",
+    hint: "Вопросы и задачи на закрепление",
+  },
+  matching: {
+    label: "Карточки",
+    badge: "bg-mist-100 text-ocean-800",
+    tile: "bg-mist-100 text-ocean-600",
+    hint: "Игра на сопоставление",
+  },
 };
 
 export const TYPE_ORDER = ["simulation", "summary", "graph", "quiz", "matching"];
 
 export const metaOf = (type: string) =>
-  MODULE_META[type] ?? { label: type, badge: "bg-gray-100 text-gray-700", hint: "" };
+  MODULE_META[type] ?? { label: type, badge: "bg-mist-100 text-slate-700", tile: "bg-mist-100 text-slate-600", hint: "" };
