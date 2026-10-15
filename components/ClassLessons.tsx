@@ -23,7 +23,7 @@ export default function ClassLessons({
   topics: T[];
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(assigned.length === 0);
+  const [open, setOpen] = useState(true);
   const [tab, setTab] = useState<"library" | "mine">("library");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -44,8 +44,8 @@ export default function ClassLessons({
   }
 
   const addTopic = (t: T) =>
-    call(`t${t.id}`, "POST", { topicId: t.id }, (d) => d.lessonId && router.push(`/classes/${classId}?lesson=${d.lessonId}`));
-  const addMine = (l: L) => call(l.id, "PUT", { lessonId: l.id, assigned: true }, () => router.push(`/classes/${classId}?lesson=${l.id}`));
+    call(`t${t.id}`, "POST", { topicId: t.id });
+  const addMine = (l: L) => call(l.id, "PUT", { lessonId: l.id, assigned: true });
   const remove = (l: L) => {
     if (confirm(`Убрать урок «${l.title}» из класса? Ученики перестанут его видеть, результаты сохранятся.`)) {
       call(l.id, "PUT", { lessonId: l.id, assigned: false });
@@ -57,7 +57,7 @@ export default function ClassLessons({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-ocean-900">Уроки класса</h2>
-          <p className="text-sm text-slate-500">Ученики класса видят все эти уроки. Нажмите на урок, чтобы открыть его статистику.</p>
+          <p className="text-sm text-slate-500">Ученики класса видят все эти уроки в порядке добавления. Нажмите на урок, чтобы открыть его разбор; общая картина — во вкладке «Журнал».</p>
         </div>
         <button onClick={() => setOpen(!open)} className={open ? "btn-ghost" : "btn-accent"}>
           <Icon name={open ? "arrowLeft" : "plus"} className="h-4 w-4" /> {open ? "Свернуть" : "Добавить урок"}
@@ -73,7 +73,7 @@ export default function ClassLessons({
                 l.id === activeLessonId ? "bg-ocean-700 text-white" : "bg-mist-50 text-ocean-800 ring-1 ring-mist-200 hover:ring-lagoon-500"
               }`}
             >
-              <Link href={`/classes/${classId}?lesson=${l.id}`} className="py-2">
+              <Link href={`/classes/${classId}/lessons?lesson=${l.id}`} className="py-2">
                 {l.title} <span className="font-normal opacity-70">· {plural(l.blocks, ["модуль", "модуля", "модулей"])}</span>
               </Link>
               <button

@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { getStudentContext } from "@/lib/student";
-import { GRADED_TYPES, computeLessonStats } from "@/lib/stats";
+import { GRADED_TYPES, computeLessonStats, pct, scoreClass } from "@/lib/stats";
 import { metaOf } from "@/lib/modules/meta";
 import Icon, { Logo } from "@/components/Icon";
 import StudentJoinForm from "@/components/StudentJoinForm";
 import StudentLogout from "@/components/StudentLogout";
+import StudentAuthForm from "@/components/StudentAuthForm";
+import SessionNotice from "@/components/SessionNotice";
 
 export const metadata = { title: "NovaLab — ученику" };
 
@@ -23,22 +25,18 @@ export default async function StudentPage() {
             <p className="text-slate-500">Код класса даст учитель</p>
           </div>
         </div>
-        <div className="grid gap-6 md:grid-cols-2">
-          <section className="card flex flex-col p-7">
+        <div className="grid gap-6 md:grid-cols-[1.3fr_1fr]">
+          <section className="card p-7">
             <span className="pill w-fit bg-sun-100 text-sun-900">рекомендуем</span>
-            <h2 className="mt-3 text-xl font-extrabold text-ocean-900">Аккаунт ученика</h2>
-            <ul className="mt-3 flex-1 space-y-2 text-slate-600">
-              <li className="flex gap-2"><Icon name="check" className="h-5 w-5 shrink-0 text-emerald-600" /> Вступай в классы по коду — сколько угодно</li>
-              <li className="flex gap-2"><Icon name="check" className="h-5 w-5 shrink-0 text-emerald-600" /> Следи за своей статистикой и задачами</li>
-              <li className="flex gap-2"><Icon name="check" className="h-5 w-5 shrink-0 text-emerald-600" /> Заходи с любого устройства по почте и паролю</li>
-            </ul>
-            <div className="mt-6 grid gap-2 sm:grid-cols-2">
-              <Link href="/login?mode=register&role=student" className="btn-accent py-3">Создать аккаунт</Link>
-              <Link href="/login?next=/student" className="btn-ghost py-3">Войти</Link>
-            </div>
+            <h2 className="mt-3 text-xl font-extrabold text-ocean-900">Аккаунт ученика по почте</h2>
+            <p className="mb-5 mt-1 text-sm text-slate-500">
+              Все твои уроки и статистика по ним — в одном месте и с любого устройства. Можно вступить в несколько классов.
+            </p>
+            <StudentAuthForm />
           </section>
           <section className="card p-7">
             <h2 className="text-xl font-extrabold text-ocean-900">Быстрый вход без почты</h2>
+            <p className="mt-1 text-xs text-slate-400">Подойдёт, если почты нет. Результаты сохранятся, а аккаунт можно создать позже.</p>
             <p className="mb-5 mt-1 text-sm text-slate-500">Код класса, имя и PIN-код. Аккаунт можно создать позже — результаты сохранятся.</p>
             <StudentJoinForm />
           </section>
@@ -76,6 +74,8 @@ export default async function StudentPage() {
           {ctx.mode === "guest" && <StudentLogout className="btn-ghost" />}
         </div>
       </div>
+
+      <SessionNotice />
 
       {ctx.mode === "guest" && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-sun-100 bg-sun-50 px-5 py-4">
@@ -137,6 +137,10 @@ export default async function StudentPage() {
                       </div>
                       <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-mist-100">
                         <div className="h-full rounded-full bg-sun-400" style={{ width: `${(done / graded.length) * 100}%` }} />
+                      </div>
+                      <div className="mt-3 flex items-center justify-between text-xs">
+                        <span className="text-slate-500">Мой балл по уроку</span>
+                        <span className={`rounded-lg px-2 py-0.5 font-bold ${scoreClass(row.average)}`}>{pct(row.average)}</span>
                       </div>
                     </div>
                   )}

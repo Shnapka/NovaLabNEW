@@ -93,7 +93,7 @@ export default async function StudentProgressPage() {
           {c.lessons.length === 0 && <div className="card p-6 text-slate-500">Учитель ещё не добавил уроков.</div>}
           <div className="grid gap-4 lg:grid-cols-2">
             {c.lessons.map(({ lesson, graded, row, practice }) => (
-              <div key={lesson.id} className="card flex flex-col p-5">
+              <div key={lesson.id} id={`lesson-${lesson.id}`} className="card flex scroll-mt-20 flex-col p-5">
                 <div className="flex items-start justify-between gap-3">
                   <h3 className="text-lg font-bold text-ocean-900">{lesson.title}</h3>
                   <span className={`rounded-xl px-3 py-1.5 text-lg font-extrabold ${scoreClass(row.average)}`}>{pct(row.average)}</span>

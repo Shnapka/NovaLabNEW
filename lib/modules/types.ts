@@ -27,6 +27,36 @@ export type GraphParam = {
   unit?: string;
 };
 
+// Сцена над графиком, синхронная с бегунком x. Строки — выражения от x и параметров графика.
+export type GraphScene =
+  | {
+      kind: "race"; // участники на трассе: pos — путь, м
+      length: number;
+      bodies: { label: string; pos: string }[];
+      markEvery?: number; // метки-«следы» через столько единиц x (секунд)
+    }
+  | {
+      kind: "dive"; // тело на динамометре опускается в жидкость
+      side: string; // ребро куба, см
+      depth: string; // глубина нижней грани под поверхностью, см (может быть < 0 — над жидкостью)
+      reading: string; // показание динамометра, Н
+      buoyancy: string; // F_A, Н
+      weight: string; // вес тела в воздухе, Н
+    }
+  | {
+      kind: "boat"; // кораблик с грузом
+      draft: string; // осадка, см
+      height: string; // высота борта, см
+      cargo: string; // масса груза, кг
+    }
+  | {
+      kind: "float"; // сплошной брусок в жидкости
+      fraction: string; // погружённая доля 0..1 (≥ 1 и тонет — лежит на дне)
+      sinks: string; // 1 — тонет, 0 — плавает
+    };
+
+export type GraphCheck = { text: string; expr: string; unit: string; explain?: string };
+
 export type GraphChart = {
   title: string;
   description?: string;
@@ -34,8 +64,11 @@ export type GraphChart = {
   y: { label: string; unit: string; max: number };
   params: GraphParam[];
   // expr — выражение от x и параметров: + - * / ^ ( ) ? : < > =, sqrt, min, max, abs, pow, PI, NaN
-  series: { label: string; expr: string; fill?: boolean }[];
-  readouts?: { label: string; expr: string; unit: string }[];
+  series: { label: string; expr: string; fill?: boolean; dashed?: boolean }[];
+  readouts?: { label: string; expr: string; unit: string }[]; // могут зависеть от x (значение в точке бегунка)
+  playhead?: { label: string; duration?: number }; // бегунок по оси x с кнопкой ▶ (duration — секунд на весь проход)
+  scene?: GraphScene;
+  checks?: GraphCheck[]; // «Найди по графику» — ответ проверяется сразу
   question?: string;
 };
 
