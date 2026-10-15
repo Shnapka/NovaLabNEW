@@ -18,6 +18,8 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      // Скомпилированные Unity WebGL-билды
+      "public/modules/**",
     ],
   },
 ];

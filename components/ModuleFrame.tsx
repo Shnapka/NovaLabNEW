@@ -18,13 +18,13 @@ export default function ModuleFrame({
   const onEventRef = useRef(onEvent);
   configRef.current = config;
   onEventRef.current = onEvent;
+  // Модуль уже ответил на init (например, событием started) — повторный init по ready не нужен
+  const spokeRef = useRef(false);
+
+  const sendInit = () =>
+    ref.current?.contentWindow?.postMessage({ source: "physlab-host", type: "init", config: configRef.current }, "*");
 
   useEffect(() => {
-    const sendInit = () =>
-      ref.current?.contentWindow?.postMessage(
-        { source: "physlab-host", type: "init", config: configRef.current },
-        "*"
-      );
 
     function onMessage(e: MessageEvent) {
       if (e.source !== ref.current?.contentWindow) return;
@@ -32,9 +32,10 @@ export default function ModuleFrame({
       if (!d || d.source !== "physlab-module") return;
 
       if (d.type === "ready") {
-        // модуль загрузился, отправляем ему настройки
-        sendInit();
+        // Модуль загрузился. Шаблон Unity копит ранние сообщения и уже мог получить init — тогда не дублируем
+        if (!spokeRef.current) sendInit();
       } else {
+        spokeRef.current = true;
         onEventRef.current?.({ type: d.type, data: d.data });
       }
     }
@@ -50,6 +51,11 @@ export default function ModuleFrame({
     <iframe
       ref={ref}
       src={src}
+      // Документ модуля (пере)загрузился: сбрасываем признак и отдаём настройки — шаблон Unity поставит их в очередь
+      onLoad={() => {
+        spokeRef.current = false;
+        sendInit();
+      }}
       className="aspect-video w-full rounded-lg border bg-black"
       allow="fullscreen"
       allowFullScreen
