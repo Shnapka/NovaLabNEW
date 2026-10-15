@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "build": "prisma generate && next build",
+    "start": "prisma migrate deploy && prisma db seed && next start",
     "lint": "eslint",
-    "unity:import": "node scripts/import-unity-build.mjs"
+    "unity:import": "node scripts/import-unity-build.mjs",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
@@ -16,7 +17,9 @@
     "next-auth": "^5.0.0-beta.32",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "zod": "^4.6.5"
+    "zod": "^4.6.5",
+    "prisma": "^6.19.3",
+    "tsx": "^4.23.15"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -27,12 +30,13 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.5.27",
-    "prisma": "^6.19.3",
     "tailwindcss": "^4",
-    "tsx": "^4.23.15",
     "typescript": "^5"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Конструктор задач движение</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #EEF3F6; }
+    #c { width: 100%; height: 100%; display: block; outline: none; touch-action: none; -webkit-tap-highlight-color: transparent; }
+    #loader {
+      position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: #E2E8ED; color: #01597B; font: 600 16px/1.4 "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+      transition: opacity .3s ease;
+    }
+    #loader.hidden { opacity: 0; pointer-events: none; }
+    #loader .title { font-size: 20px; margin-bottom: 16px; text-align: center; padding: 0 16px; }
+    #loader .bar { width: min(320px, 70vw); height: 10px; border-radius: 5px; background: #99D8DE; overflow: hidden; }
+    #loader .fill { width: 0; height: 100%; border-radius: 5px; background: #01597B; transition: width .15s linear; }
+    #loader .hint { margin-top: 10px; font-weight: 400; font-size: 14px; color: #5B6B7A; }
+    #loader.error .fill { background: #E0525B; }
+    #loader.error .hint { color: #B8323B; }
+  </style>
+</head>
+<body>
+  <canvas id="c" tabindex="-1"></canvas>
+  <div id="loader">
+    <div class="title">Конструктор задач движение</div>
+    <div class="bar"><div class="fill" id="fill"></div></div>
+    <div class="hint" id="hint">Загрузка симуляции…</div>
+  </div>
+  <script>
+    (function () {
+      var build = "Build";
+      var config = {
+        dataUrl: build + "/speed-practice.data",
+        frameworkUrl: build + "/speed-practice.framework.js",
+        codeUrl: build + "/speed-practice.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "PhysLab",
+        productName: "Конструктор задач движение",
+        productVersion: "0.1.0",
+        // Keep the canvas size equal to the iframe; warnings go to the console, not on top of the page.
+        matchWebGLToCanvasSize: true,
+        showBanner: function (msg, type) { if (type === "error") console.error(msg); else console.warn(msg); }
+      };
+
+      var canvas = document.querySelector("#c");
+      var loader = document.querySelector("#loader");
+      var fill = document.querySelector("#fill");
+      var hint = document.querySelector("#hint");
+      var instance = null;
+      var queue = [];
+
+      // Host → module. "init" is part of the contract; "set" is the allowed extension (live parameter changes).
+      function deliver(d) {
+        var json = JSON.stringify(d.config || {});
+        if (d.type === "init") instance.SendMessage("ModuleRoot", "Init", json);
+        else if (d.type === "set") instance.SendMessage("ModuleRoot", "SetParams", json);
+      }
+
+      window.addEventListener("message", function (e) {
+        var d = e.data;
+        if (!d || d.source !== "physlab-host" || (d.type !== "init" && d.type !== "set")) return;
+        if (instance) deliver(d); else queue.push(d);
+      });
+
+      var s = document.createElement("script");
+      s.src = build + "/speed-practice.loader.js";
+      s.onload = function () {
+        createUnityInstance(canvas, config, function (progress) {
+          fill.style.width = Math.round(progress * 100) + "%";
+        }).then(function (inst) {
+          instance = inst;
+          loader.classList.add("hidden");
+          setTimeout(function () { loader.style.display = "none"; }, 400);
+          queue.splice(0).forEach(deliver);
+          parent.postMessage({ source: "physlab-module", type: "ready" }, "*");
+        }).catch(function (err) {
+          loader.classList.add("error");
+          hint.textContent = "Не удалось запустить симуляцию. Обновите страницу или откройте её в Chrome, Edge или Яндекс.Браузере.";
+          console.error(err);
+        });
+      };
+      s.onerror = function () {
+        loader.classList.add("error");
+        hint.textContent = "Не удалось загрузить файлы симуляции.";
+      };
+      document.body.appendChild(s);
+    })();
+  </script>
+</body>
+</html>

@@ -41,6 +41,3 @@ yarn-error.log*
 next-env.d.ts
 !.env.example
 
-# Unity WebGL-билды (по ~30 МБ) — подключаются командой npm run unity:import, в git не храним
-/public/modules/*
-!/public/modules/placeholder/
