@@ -9,7 +9,10 @@ import Rich from "@/components/modules/Rich";
 import Icon from "@/components/Icon";
 import AssignLessons from "@/components/AssignLessons";
 
-const shortTitle = (t: string) => t.replace(/^[^:]+:\s*/, "");
+const shortTitle = (t: string) => {
+  const s = t.replace(/^[^:]+:\s*/, "");
+  return s.charAt(0).toUpperCase() + s.slice(1);
+};
 const time = (d: Date) => d.toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 const num = (n: unknown) => (typeof n === "number" ? n.toLocaleString("ru-RU", { maximumSignificantDigits: 6 }) : "—");
 
