@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { teacherSession } from "@/lib/authz";
 import { prisma } from "@/lib/db";
+import { validateOverride } from "@/lib/modules/overrides";
 
 const schema = z.object({
   title: z.string().min(1).max(200),
@@ -22,6 +23,15 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const parsed = schema.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: "bad data" }, { status: 400 });
   const { title, isPublished, blocks } = parsed.data;
+
+  // Свои вопросы квиза и карточек проверяем так же, как в редакторе
+  const mods = await prisma.module.findMany({ where: { id: { in: blocks.map((b) => b.moduleId) } }, select: { id: true, type: true } });
+  const typeOf = Object.fromEntries(mods.map((m) => [m.id, m.type]));
+  for (const [i, b] of blocks.entries()) {
+    if (!typeOf[b.moduleId]) return NextResponse.json({ error: `Модуль ${i + 1}: не найден` }, { status: 400 });
+    const errs = validateOverride(typeOf[b.moduleId], b.config);
+    if (errs.length) return NextResponse.json({ error: `Модуль ${i + 1}: ${errs[0]}` }, { status: 400 });
+  }
 
   await prisma.$transaction([
     prisma.lessonBlock.deleteMany({ where: { lessonId: id } }),

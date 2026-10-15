@@ -4,7 +4,7 @@ import Link from "next/link";
 import { pct, scoreClass } from "@/lib/stats";
 import Icon from "@/components/Icon";
 
-export type JournalLesson = { id: string; title: string; average: number | null; finished: number; active: number };
+export type JournalLesson = { id: string; title: string; group: string; topic: string | null; average: number | null; finished: number; active: number };
 export type JournalRow = {
   id: string;
   name: string;
@@ -44,6 +44,14 @@ export default function JournalTable({ classId, lessons, rows }: { classId: stri
     return <div className="card p-8 text-center text-slate-500">В классе пока нет учеников — дайте им код класса.</div>;
   }
 
+  // Разделы для верхней строки шапки: подряд идущие уроки одного раздела объединяются
+  const groups = lessons.reduce<{ label: string; span: number }[]>((acc, l) => {
+    const last = acc[acc.length - 1];
+    if (last && last.label === l.group) last.span++;
+    else acc.push({ label: l.group, span: 1 });
+    return acc;
+  }, []);
+
   return (
     <section className="card overflow-hidden">
       <div className="flex flex-wrap items-center gap-3 border-b border-mist-100 px-5 py-4">
@@ -70,12 +78,20 @@ export default function JournalTable({ classId, lessons, rows }: { classId: stri
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
+            <tr className="bg-ocean-700 text-xs text-white">
+              <th className="sticky left-0 z-10 bg-ocean-700 px-4 py-2 text-left font-semibold">Раздел</th>
+              {groups.map((g, i) => (
+                <th key={i} colSpan={g.span} className="border-l border-white/20 px-2 py-2 text-center font-semibold">{g.label}</th>
+              ))}
+              <th colSpan={2} className="border-l border-white/20" />
+            </tr>
             <tr className="bg-mist-50 text-left text-xs text-slate-500">
               <th className="sticky left-0 z-10 min-w-48 bg-mist-50 px-4 py-3 font-semibold">Ученик</th>
               {lessons.map((l, i) => (
                 <th key={l.id} className="min-w-32 px-2 py-3 text-center font-semibold">
                   <Link href={`/classes/${classId}/lessons?lesson=${l.id}`} className="block hover:text-ocean-700" title={l.title}>
                     <span className="text-mist-300">{i + 1}.</span> <span className="line-clamp-2">{l.title}</span>
+                    {l.topic && l.topic !== l.title && <span className="block font-normal text-slate-400">{l.topic}</span>}
                   </Link>
                 </th>
               ))}

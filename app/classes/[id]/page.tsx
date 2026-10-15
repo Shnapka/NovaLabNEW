@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { teacherSession } from "@/lib/authz";
 import { loadClassForTeacher } from "@/lib/classData";
 import { pct } from "@/lib/stats";
+import { plural } from "@/lib/plural";
 import Icon from "@/components/Icon";
 import JournalTable from "@/components/class/JournalTable";
 
@@ -30,7 +31,7 @@ export default async function ClassJournalPage({ params }: { params: Promise<{ i
         {[
           ["Средний балл класса", pct(classAvg), "по всем начатым урокам", "chart"],
           ["Работают", `${active.length} из ${journal.length}`, "учеников с результатами", "users"],
-          ["Уроков в классе", `${lessons.length}`, "в порядке добавления", "layers"],
+          ["Уроков в классе", `${lessons.length}`, plural(data.groups.length, ["раздел", "раздела", "разделов"]), "layers"],
           ["Своих задач решено", `${journal.reduce((a, r) => a + r.practiceSolved, 0)}`, `всего попыток: ${results.length}`, "practice"],
         ].map(([label, value, hint, icon]) => (
           <div key={label} className="card p-5">
@@ -72,9 +73,11 @@ export default async function ClassJournalPage({ params }: { params: Promise<{ i
 
       <JournalTable
         classId={classroom.id}
-        lessons={lessons.map(({ lesson, stats }) => ({
+        lessons={lessons.map(({ lesson, stats, group }) => ({
           id: lesson.id,
           title: lesson.title,
+          group: group.label,
+          topic: group.topic,
           average: stats.kpi.average,
           finished: stats.kpi.finished,
           active: stats.kpi.active,

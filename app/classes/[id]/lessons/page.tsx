@@ -51,20 +51,27 @@ export default async function ClassLessonPage({
             <Icon name="arrowLeft" className="h-4 w-4" />
           </Link>
         )}
-        <div className="flex flex-1 flex-wrap gap-2">
-          {lessons.map((l, i) => (
-            <Link
-              key={l.lesson.id}
-              href={`/classes/${id}/lessons?lesson=${l.lesson.id}`}
-              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
-                l.lesson.id === lesson.id ? "bg-ocean-700 text-white" : "bg-white text-ocean-800 ring-1 ring-mist-200 hover:ring-lagoon-500"
-              }`}
-            >
-              <span className="opacity-60">{i + 1}.</span> {l.lesson.title}
-              <span className={`ml-2 rounded px-1.5 text-xs ${l.lesson.id === lesson.id ? "bg-white/20" : scoreClass(l.stats.kpi.average)}`}>
-                {pct(l.stats.kpi.average)}
-              </span>
-            </Link>
+        <div className="flex-1 space-y-2">
+          {data.groups.map((g) => (
+            <div key={g.key} className="flex flex-wrap items-center gap-2">
+              <span className="w-full text-xs font-bold uppercase tracking-wide text-lagoon-700 sm:w-48">{g.label}</span>
+              {lessons
+                .filter((l) => l.group.key === g.key)
+                .map((l) => (
+                  <Link
+                    key={l.lesson.id}
+                    href={`/classes/${id}/lessons?lesson=${l.lesson.id}`}
+                    className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
+                      l.lesson.id === lesson.id ? "bg-ocean-700 text-white" : "bg-white text-ocean-800 ring-1 ring-mist-200 hover:ring-lagoon-500"
+                    }`}
+                  >
+                    <span className="opacity-60">{lessons.indexOf(l) + 1}.</span> {l.lesson.title}
+                    <span className={`ml-2 rounded px-1.5 text-xs ${l.lesson.id === lesson.id ? "bg-white/20" : scoreClass(l.stats.kpi.average)}`}>
+                      {pct(l.stats.kpi.average)}
+                    </span>
+                  </Link>
+                ))}
+            </div>
           ))}
         </div>
         {next && (
@@ -93,7 +100,10 @@ export default async function ClassLessonPage({
 
       <section className="card overflow-hidden">
         <div className="flex flex-wrap items-end justify-between gap-2 border-b border-mist-100 px-5 py-4">
-          <h2 className="text-lg font-bold text-ocean-900">{lesson.title}: успеваемость по модулям</h2>
+          <div>
+            <div className="text-xs font-semibold text-lagoon-700">{selected.group.label}{selected.group.topic ? ` · ${selected.group.topic}` : ""}</div>
+            <h2 className="text-lg font-bold text-ocean-900">{lesson.title}: успеваемость по модулям</h2>
+          </div>
           <div className="flex gap-3 text-xs text-slate-500">
             <span className="flex items-center gap-1"><span className="h-3 w-3 rounded bg-emerald-100" /> ≥ 85%</span>
             <span className="flex items-center gap-1"><span className="h-3 w-3 rounded bg-sun-100" /> 60–84%</span>

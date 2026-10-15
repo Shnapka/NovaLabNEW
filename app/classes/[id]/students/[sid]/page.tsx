@@ -43,11 +43,17 @@ export default async function ClassStudentPage({ params }: { params: Promise<{ i
         ))}
       </section>
 
-      {data.lessons.map(({ lesson, graded, stats }, i) => {
+      {data.lessons.map(({ lesson, graded, stats, group }, i) => {
         const row = stats.rows.find((r) => r.id === sid)!;
         const titleOf = Object.fromEntries(graded.map((m) => [m.moduleId, shortTitle(m.title)]));
+        const newGroup = i === 0 || data.lessons[i - 1].group.key !== group.key;
         return (
           <section key={lesson.id} className="card overflow-hidden">
+            {newGroup && (
+              <div className="flex items-center gap-2 bg-ocean-700 px-5 py-2 text-xs font-bold uppercase tracking-wide text-white">
+                <Icon name="book" className="h-4 w-4" /> {group.label}
+              </div>
+            )}
             <div className="flex flex-wrap items-center gap-3 border-b border-mist-100 px-5 py-4">
               <span className="text-sm font-semibold text-mist-300">{i + 1}.</span>
               <h3 className="mr-auto text-lg font-bold text-ocean-900">{lesson.title}</h3>

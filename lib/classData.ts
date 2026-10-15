@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/db";
 import { GRADED_TYPES, computeLessonStats, type GradedModule } from "@/lib/stats";
+import { applyOverride } from "@/lib/modules/overrides";
 
-type BlockWithModule = { moduleId: string; module: { type: string; title: string; content: unknown } };
+type BlockWithModule = { moduleId: string; config?: unknown; module: { type: string; title: string; content: unknown } };
 
 /** Оцениваемые модули урока (один модуль, стоящий в уроке дважды, считается один раз) */
 export function gradedOf(blocks: BlockWithModule[]): GradedModule[] {
@@ -11,9 +12,30 @@ export function gradedOf(blocks: BlockWithModule[]): GradedModule[] {
     .map((b) => ({
       moduleId: b.moduleId,
       type: b.module.type,
-      title: b.module.title,
+      title: applyOverride(b.module, b.config).title,
       goal: Number((b.module.content as { goal?: number })?.goal ?? 1),
     }));
+}
+
+// Раздел урока — по разделу большинства его модулей (класс · раздел учебника)
+type BlockWithTopic = { module: { topic: { title: string; paragraph: string | null; section: { id: number; title: string; order: number; grade: { number: number } } } } };
+export function lessonGroup(blocks: BlockWithTopic[]) {
+  if (blocks.length === 0) return { key: "none", label: "Без модулей", order: 1e9, topic: null as string | null };
+  const count = new Map<number, number>();
+  for (const b of blocks) count.set(b.module.topic.section.id, (count.get(b.module.topic.section.id) ?? 0) + 1);
+  const [topId, topCount] = [...count.entries()].sort((a, b) => b[1] - a[1])[0];
+  if (count.size > 1 && topCount <= blocks.length / 2) return { key: "mixed", label: "Смешанные уроки", order: 1e8, topic: null };
+  const sec = blocks.find((b) => b.module.topic.section.id === topId)!.module.topic.section;
+  // Темы сравниваем по названию: Prisma возвращает отдельный объект темы для каждого модуля
+  const inSection = blocks.filter((b) => b.module.topic.section.id === topId).map((b) => b.module.topic);
+  const titles = new Set(inSection.map((t) => t.title));
+  const t = titles.size === 1 ? inSection[0] : null;
+  return {
+    key: `s${sec.id}`,
+    label: `${sec.grade.number} кл. · ${sec.title}`,
+    order: sec.grade.number * 1000 + sec.order,
+    topic: t ? `${t.paragraph ? t.paragraph + " · " : ""}${t.title}` : null,
+  };
 }
 
 export const shortTitle = (t: string) => {
@@ -32,7 +54,12 @@ export async function loadClassForTeacher(id: string, ownerId: string) {
       students: { orderBy: { name: "asc" }, include: { _count: { select: { results: true } } } },
       lessons: {
         orderBy: { createdAt: "asc" },
-        include: { blocks: { orderBy: { position: "asc" }, include: { module: true } } },
+        include: {
+          blocks: {
+            orderBy: { position: "asc" },
+            include: { module: { include: { topic: { include: { section: { include: { grade: true } } } } } } },
+          },
+        },
       },
     },
   });
@@ -43,11 +70,15 @@ export async function loadClassForTeacher(id: string, ownerId: string) {
     orderBy: { createdAt: "desc" },
   });
 
-  const lessons = classroom.lessons.map((lesson) => {
-    const graded = gradedOf(lesson.blocks);
-    const stats = computeLessonStats(graded, classroom.students, results.filter((r) => r.lessonId === lesson.id));
-    return { lesson, graded, stats };
-  });
+  // Уроки по разделам учебника, внутри раздела — в порядке добавления
+  const lessons = classroom.lessons
+    .map((lesson, added) => {
+      const graded = gradedOf(lesson.blocks);
+      const stats = computeLessonStats(graded, classroom.students, results.filter((r) => r.lessonId === lesson.id));
+      return { lesson, graded, stats, group: lessonGroup(lesson.blocks), added };
+    })
+    .sort((a, b) => a.group.order - b.group.order || a.added - b.added);
+  const groups = [...new Map(lessons.map((l) => [l.group.key, { ...l.group, lessonIds: lessons.filter((x) => x.group.key === l.group.key).map((x) => x.lesson.id) }])).values()];
 
   // Журнал: ученик × урок
   const journal = classroom.students.map((s) => {
@@ -73,5 +104,5 @@ export async function loadClassForTeacher(id: string, ownerId: string) {
     };
   });
 
-  return { classroom, results, lessons, journal };
+  return { classroom, results, lessons, groups, journal };
 }

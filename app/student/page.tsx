@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { getStudentContext } from "@/lib/student";
-import { GRADED_TYPES, computeLessonStats, pct, scoreClass } from "@/lib/stats";
+import { computeLessonStats, pct, scoreClass } from "@/lib/stats";
 import { metaOf } from "@/lib/modules/meta";
 import Icon, { Logo } from "@/components/Icon";
 import StudentJoinForm from "@/components/StudentJoinForm";
 import StudentLogout from "@/components/StudentLogout";
 import StudentAuthForm from "@/components/StudentAuthForm";
 import SessionNotice from "@/components/SessionNotice";
+import { gradedOf } from "@/lib/classData";
 
 export const metadata = { title: "NovaLab — ученику" };
 
@@ -103,10 +104,7 @@ export default async function StudentPage() {
         <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {lessons.map((l) => {
             // «Выполнено» считается так же, как в статистике: практика — когда решено нужное число задач
-            const graded = l.blocks
-              .filter((b) => GRADED_TYPES.includes(b.module.type))
-              .filter((b, i, arr) => arr.findIndex((x) => x.moduleId === b.moduleId) === i)
-              .map((b) => ({ moduleId: b.moduleId, type: b.module.type, title: b.module.title, goal: Number((b.module.content as { goal?: number })?.goal ?? 1) }));
+            const graded = gradedOf(l.blocks);
             const me = ctx.students.find((s) => l.classrooms.some((c) => c.id === s.classroomId))!;
             const row = computeLessonStats(graded, [{ id: me.id, name: me.name }], results.filter((r) => r.lessonId === l.id && r.studentId === me.id)).rows[0];
             const done = graded.filter((m) => row.cells[m.moduleId].done).length;

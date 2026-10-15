@@ -2,10 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getStudentContext } from "@/lib/student";
-import { GRADED_TYPES, computeLessonStats, pct, scoreClass } from "@/lib/stats";
+import { computeLessonStats, pct, scoreClass } from "@/lib/stats";
 import { metaOf } from "@/lib/modules/meta";
 import Rich from "@/components/modules/Rich";
 import Icon from "@/components/Icon";
+import { gradedOf } from "@/lib/classData";
 
 export const metadata = { title: "NovaLab — моя статистика" };
 
@@ -36,10 +37,7 @@ export default async function StudentProgressPage() {
     id: m.id,
     name: m.classroom.name,
     lessons: m.classroom.lessons.map((l) => {
-      const graded = l.blocks
-        .filter((b) => GRADED_TYPES.includes(b.module.type))
-        .filter((b, i, arr) => arr.findIndex((x) => x.moduleId === b.moduleId) === i)
-        .map((b) => ({ moduleId: b.moduleId, type: b.module.type, title: b.module.title, goal: Number((b.module.content as { goal?: number })?.goal ?? 1) }));
+      const graded = gradedOf(l.blocks);
       const results = m.results.filter((r) => r.lessonId === l.id);
       const row = computeLessonStats(graded, [{ id: m.id, name: m.name }], results).rows[0];
       return { lesson: l, graded, row, practice: results.filter((r) => r.kind === "practice") };

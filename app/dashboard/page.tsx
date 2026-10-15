@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { plural } from "@/lib/plural";
 import { metaOf } from "@/lib/modules/meta";
 import NewLessonButton from "@/components/NewLessonButton";
+import DeleteLessonButton from "@/components/DeleteLessonButton";
 import Icon from "@/components/Icon";
 
 export default async function Dashboard() {
@@ -14,7 +15,10 @@ export default async function Dashboard() {
   const lessons = await prisma.lesson.findMany({
     where: { ownerId: session.user.id },
     orderBy: { updatedAt: "desc" },
-    include: { blocks: { orderBy: { position: "asc" }, include: { module: { select: { type: true } } } } },
+    include: {
+      blocks: { orderBy: { position: "asc" }, include: { module: { select: { type: true } } } },
+      _count: { select: { classrooms: true, results: true } },
+    },
   });
 
   return (
@@ -71,6 +75,7 @@ export default async function Dashboard() {
                 <Link href={`/lessons/${l.id}/edit`} className="btn-ghost flex-1">
                   <Icon name="edit" className="h-4 w-4" /> Изменить
                 </Link>
+                <DeleteLessonButton lessonId={l.id} title={l.title} classes={l._count.classrooms} results={l._count.results} />
               </div>
             </li>
           ))}

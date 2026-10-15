@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getStudentContext, resolveStudentForLesson } from "@/lib/student";
 import StudentLesson from "@/components/StudentLesson";
 import type { PracticeAttempt } from "@/components/PracticeLog";
+import { applyOverride } from "@/lib/modules/overrides";
 
 export default async function StudentLessonPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -53,8 +54,8 @@ export default async function StudentLessonPage({ params }: { params: Promise<{ 
           id: b.id,
           moduleId: b.moduleId,
           type: b.module.type,
-          title: b.module.title,
-          content: b.module.content,
+          title: applyOverride(b.module, b.config).title,
+          content: applyOverride(b.module, b.config).content,
           buildUrl: b.module.buildUrl,
           // Практике передаём прогресс ученика: симуляция может продолжить счёт «2 из 3», а не начинать с нуля
           config:

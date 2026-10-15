@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import LessonPlayer from "@/components/LessonPlayer";
+import { applyOverride } from "@/lib/modules/overrides";
 
 export default async function LessonPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -21,8 +22,8 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
       blocks={lesson.blocks.map((b) => ({
         id: b.id,
         type: b.module.type,
-        title: b.module.title,
-        content: b.module.content,
+        title: applyOverride(b.module, b.config).title,
+        content: applyOverride(b.module, b.config).content,
         buildUrl: b.module.buildUrl,
         config: b.config,
       }))}
