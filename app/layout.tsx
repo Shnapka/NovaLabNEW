@@ -47,7 +47,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               ) : (
                 <>
                   <Link href="/student" className="rounded-lg px-3 py-1.5 font-semibold text-aqua-200 hover:bg-white/10 hover:text-white">Я ученик</Link>
-                  <Link href="/login" className="btn-accent">Войти</Link>
+                  <Link href="/login?role=teacher" className="btn-accent">Я учитель</Link>
                 </>
               )}
             </div>

@@ -55,14 +55,13 @@ export default async function Home() {
               Общая библиотека для учителей: выберите класс и тему — и проведите урок с интерактивной
               симуляцией, конспектом, графиками и играми на закрепление.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href={cta} className="btn-accent px-6 py-3 text-base">
-                {isStudent ? "К моим урокам" : "Открыть библиотеку"} <Icon name="arrowRight" />
-              </Link>
-              <Link href="/student" className="btn border border-white/30 px-6 py-3 text-base text-white hover:bg-white/10">
-                Я ученик — войти по коду класса
-              </Link>
-            </div>
+            {session?.user && (
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link href={cta} className="btn-accent px-6 py-3 text-base">
+                  {isStudent ? "К моим урокам" : "Открыть библиотеку"} <Icon name="arrowRight" />
+                </Link>
+              </div>
+            )}
             <dl className="mt-10 flex gap-8 text-sm">
               {[
                 [grades, "классов"],
@@ -76,9 +75,45 @@ export default async function Home() {
               ))}
             </dl>
           </div>
-          <div className="mx-auto hidden h-72 w-full max-w-sm lg:block">
-            <HeroArt />
-          </div>
+          {session?.user ? (
+            <div className="mx-auto hidden h-72 w-full max-w-sm lg:block">
+              <HeroArt />
+            </div>
+          ) : (
+            // Первый выбор на сайте: кто вы
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+              <div className="flex flex-col rounded-2xl bg-white p-6 text-slate-700 shadow-xl">
+                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-ocean-700 text-sun-400">
+                  <Icon name="book" className="h-6 w-6" />
+                </span>
+                <h2 className="mt-4 text-2xl font-extrabold text-ocean-900">Я учитель</h2>
+                <ul className="mt-2 flex-1 space-y-1 text-sm">
+                  <li>• Библиотека уроков 7–11 классов</li>
+                  <li>• Свои уроки и вопросы</li>
+                  <li>• Классы и журнал успеваемости</li>
+                </ul>
+                <div className="mt-5 grid gap-2">
+                  <Link href="/login?role=teacher" className="btn-primary py-2.5">Войти</Link>
+                  <Link href="/login?mode=register&role=teacher" className="btn-ghost py-2.5">Создать аккаунт учителя</Link>
+                </div>
+              </div>
+              <div className="flex flex-col rounded-2xl bg-white p-6 text-slate-700 shadow-xl">
+                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sun-400 text-ocean-950">
+                  <Icon name="users" className="h-6 w-6" />
+                </span>
+                <h2 className="mt-4 text-2xl font-extrabold text-ocean-900">Я ученик</h2>
+                <ul className="mt-2 flex-1 space-y-1 text-sm">
+                  <li>• Уроки своего класса</li>
+                  <li>• Симуляции и практика</li>
+                  <li>• Своя статистика</li>
+                </ul>
+                <div className="mt-5 grid gap-2">
+                  <Link href="/student" className="btn-accent py-2.5">Войти или зарегистрироваться</Link>
+                  <span className="text-center text-xs text-slate-500">понадобится код класса от учителя</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

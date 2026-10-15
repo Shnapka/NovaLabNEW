@@ -82,7 +82,7 @@ export default function LoginPage() {
           </div>
 
           <h1 className="text-2xl font-extrabold text-ocean-900">
-            {mode === "login" ? "С возвращением!" : role === "STUDENT" ? "Аккаунт ученика" : "Аккаунт учителя"}
+            {mode === "login" ? "Вход для учителя" : role === "STUDENT" ? "Аккаунт ученика" : "Аккаунт учителя"}
           </h1>
           <p className="mb-6 mt-1 text-sm text-slate-500">
             {mode === "login"
@@ -139,8 +139,8 @@ export default function LoginPage() {
             </button>
           </form>
           <p className="mt-5 text-center text-sm text-slate-500">
-            Ученик без почты?{" "}
-            <a href="/student" className="font-semibold text-lagoon-700 hover:text-ocean-700">Быстрый вход по коду класса</a>
+            Вы ученик?{" "}
+            <a href="/student" className="font-semibold text-lagoon-700 hover:text-ocean-700">Вход для учеников →</a>
           </p>
         </div>
       </div>
