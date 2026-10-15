@@ -5,6 +5,10 @@ const PATHS: Record<string, string> = {
   graph: "M3 3v18h18M7 15l4-5 3 3 5-7",
   quiz: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Zm-2.5-13a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14m0 3h.01",
   matching: "M3 5h7v6H3zM14 13h7v6h-7zM10 8h4a2 2 0 0 1 2 2v3M14 16h-4a2 2 0 0 1-2-2v-3",
+  practice: "M4 20h4L18.5 9.5l-4-4L4 16v4ZM13 7l4 4M14 20h7",
+  users: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8",
+  chart: "M3 3v18h18M8 17V11M13 17V7M18 17v-4",
+  key: "M15 7a4 4 0 1 1-3.9 4.9L3 20v-3h3v-3h3l1.1-1.1A4 4 0 0 1 15 7Zm1 1h.01",
   play: "M6 4l14 8-14 8V4Z",
   plus: "M12 5v14M5 12h14",
   search: "m21 21-4.3-4.3M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14Z",
@@ -26,17 +30,14 @@ export default function Icon({ name, className = "h-5 w-5" }: { name: string; cl
   );
 }
 
-// Логотип: орбиты атома с «солнечным» ядром
+// Логотип NovaLab: вспыхивающая звезда («нова») на орбите
 export function Logo({ className = "h-8 w-8" }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden>
       <rect width="32" height="32" rx="9" fill="#01597B" />
-      <g fill="none" stroke="#99D8DE" strokeWidth="1.6">
-        <ellipse cx="16" cy="16" rx="11" ry="4.5" />
-        <ellipse cx="16" cy="16" rx="11" ry="4.5" transform="rotate(60 16 16)" />
-        <ellipse cx="16" cy="16" rx="11" ry="4.5" transform="rotate(-60 16 16)" />
-      </g>
-      <circle cx="16" cy="16" r="3" fill="#F2BA00" />
+      <ellipse cx="16" cy="16" rx="12" ry="5" fill="none" stroke="#99D8DE" strokeWidth="1.6" transform="rotate(-25 16 16)" />
+      <path d="M16 5.5c.9 6 3.6 8.7 9.5 10.5-5.9 1.8-8.6 4.5-9.5 10.5-.9-6-3.6-8.7-9.5-10.5 5.9-1.8 8.6-4.5 9.5-10.5Z" fill="#F2BA00" />
+      <circle cx="26.2" cy="11.2" r="1.7" fill="#E2E8ED" />
     </svg>
   );
 }

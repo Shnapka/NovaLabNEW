@@ -19,6 +19,7 @@ model User {
   passwordHash String
   role         Role     @default(TEACHER)
   lessons      Lesson[]
+  classrooms   Classroom[]
   createdAt    DateTime @default(now())
 }
 
@@ -54,17 +55,18 @@ model Topic {
 
 model Module {
   id           String        @id // slug, например "archimedes-sim"
-  type         String        // simulation | summary | graph | quiz | matching
+  type         String        // simulation | summary | graph | quiz | matching | practice
   title        String
   description  String?
   order        Int           @default(0)
   version      String        @default("1.0.0")
   buildUrl     String?       // только для симуляций: ссылка на index.html WebGL-билда
-  configSchema Json          @default("{}") // для симуляций: настройки по умолчанию
+  configSchema Json          @default("{}") // для симуляций и практики: настройки по умолчанию
   content      Json          @default("{}") // контент нативных модулей (см. lib/modules/types.ts)
   topicId      Int
   topic        Topic         @relation(fields: [topicId], references: [id])
   blocks       LessonBlock[]
+  results      Result[]
 }
 
 model Lesson {
@@ -74,6 +76,8 @@ model Lesson {
   ownerId     String
   owner       User          @relation(fields: [ownerId], references: [id])
   blocks      LessonBlock[]
+  classrooms  Classroom[] // классы, которым урок назначен
+  results     Result[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 }
@@ -86,4 +90,47 @@ model LessonBlock {
   module   Module @relation(fields: [moduleId], references: [id])
   position Int
   config   Json   @default("{}")
+}
+
+// Класс учителя: ученики входят по коду класса
+model Classroom {
+  id        String    @id @default(cuid())
+  name      String
+  code      String    @unique
+  ownerId   String
+  owner     User      @relation(fields: [ownerId], references: [id])
+  students  Student[]
+  lessons   Lesson[]
+  createdAt DateTime  @default(now())
+}
+
+model Student {
+  id          String    @id @default(cuid())
+  name        String
+  pin         String // 4 цифры: защищает от входа под чужим именем, учитель видит PIN в списке
+  token       String    @unique // секрет в cookie ученика
+  classroomId String
+  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  results     Result[]
+  createdAt   DateTime  @default(now())
+
+  @@unique([classroomId, name])
+}
+
+// Одна попытка ученика в оцениваемом модуле
+model Result {
+  id        String   @id @default(cuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  lessonId  String
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  moduleId  String
+  module    Module   @relation(fields: [moduleId], references: [id])
+  kind      String // quiz | matching | practice | challenge
+  score     Float // 0..1
+  correct   Boolean?
+  detail    Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  @@index([lessonId, studentId])
 }

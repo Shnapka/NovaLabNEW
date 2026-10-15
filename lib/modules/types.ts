@@ -1,7 +1,7 @@
 // Контент нативных модулей (конспект, графики, квиз, карточки) хранится в Module.content.
 // В строках можно использовать разметку: **жирный**, x_{нижний}, x^{верхний}, [[числитель||знаменатель]].
 
-export type ModuleType = "simulation" | "summary" | "graph" | "quiz" | "matching";
+export type ModuleType = "simulation" | "summary" | "graph" | "quiz" | "matching" | "practice";
 
 // ---------- Конспект ----------
 export type SummaryBlock =
@@ -72,6 +72,10 @@ export type SimulationContent = {
   events?: { type: string; description: string }[];
 };
 
+// ---------- Практика «составь и реши» ----------
+// topic — ключ из lib/practice (speed, archimedes), goal — сколько задач нужно решить верно
+export type PracticeContent = { topic: string; goal?: number; intro?: string };
+
 export type ModuleSeed = {
   id: string;
   type: ModuleType;
@@ -79,5 +83,5 @@ export type ModuleSeed = {
   description?: string;
   buildUrl?: string;
   configSchema?: Record<string, unknown>; // для симуляций: настройки по умолчанию
-  content: SummaryContent | GraphContent | QuizContent | MatchingContent | SimulationContent;
+  content: SummaryContent | GraphContent | QuizContent | MatchingContent | SimulationContent | PracticeContent;
 };

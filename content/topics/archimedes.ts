@@ -233,6 +233,18 @@ export const archimedesModules: ModuleSeed[] = [
     },
   },
   {
+    id: "archimedes-practice",
+    type: "practice",
+    title: "Практика: составь и реши задачу на закон Архимеда",
+    description: "Ученик сам составляет условие (жидкость, объём, вес, кораблик), решает, а система проверяет ответ",
+    configSchema: { topic: "archimedes", goal: 3 },
+    content: {
+      topic: "archimedes",
+      goal: 3,
+      intro: "Придумай свою задачу на архимедову силу: выбери, что нужно найти, жидкость и данные. Затем реши её — ответ проверит система, а результат увидит учитель. Реши верно 3 задачи разных типов.",
+    },
+  },
+  {
     id: "archimedes-quiz",
     type: "quiz",
     title: "Квиз: архимедова сила",

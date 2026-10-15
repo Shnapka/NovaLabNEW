@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 const LINKS = [
   { href: "/library", label: "Библиотека", match: ["/library"] },
   { href: "/dashboard", label: "Мои уроки", match: ["/dashboard", "/lessons", "/lesson/"] },
+  { href: "/classes", label: "Классы", match: ["/classes"] },
 ];
 
 export default function NavLinks() {

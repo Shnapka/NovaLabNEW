@@ -58,9 +58,9 @@ export default async function Home() {
               <Link href={cta} className="btn-accent px-6 py-3 text-base">
                 Открыть библиотеку <Icon name="arrowRight" />
               </Link>
-              <a href="#how" className="btn border border-white/30 px-6 py-3 text-base text-white hover:bg-white/10">
-                Как это работает
-              </a>
+              <Link href="/student" className="btn border border-white/30 px-6 py-3 text-base text-white hover:bg-white/10">
+                Я ученик — войти по коду класса
+              </Link>
             </div>
             <dl className="mt-10 flex gap-8 text-sm">
               {[
@@ -88,7 +88,7 @@ export default async function Home() {
           {[
             ["Выберите класс и тему", "Библиотека повторяет оглавление учебника: класс → раздел → тема с номером параграфа."],
             ["Откройте модули", "В центре — WebGL-симуляция. Рядом конспект, графики, квиз и карточки на закрепление."],
-            ["Покажите классу", "Режим показа на весь экран или свой урок из нужных модулей — со ссылкой для учеников."],
+            ["Назначьте классу", "Ученики входят по коду класса, решают свои задачи, а вы видите успеваемость каждого в статистике."],
           ].map(([t, d], i) => (
             <div key={t} className="card p-6">
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-sun-400 text-lg font-extrabold text-ocean-950">
@@ -104,7 +104,7 @@ export default async function Home() {
       {/* Типы модулей */}
       <section>
         <h2 className="text-center text-2xl font-extrabold text-ocean-900">Из чего состоит каждый урок</h2>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {TYPE_ORDER.map((t) => {
             const m = MODULE_META[t];
             const main = t === "simulation";
@@ -113,8 +113,8 @@ export default async function Home() {
                 key={t}
                 className={
                   main
-                    ? "relative overflow-hidden rounded-2xl bg-ocean-700 p-6 text-white sm:col-span-2 lg:row-span-2"
-                    : "card p-5 lg:col-span-2"
+                    ? "relative overflow-hidden rounded-2xl bg-ocean-700 p-6 text-white sm:col-span-2 lg:col-span-3"
+                    : "card p-5"
                 }
               >
                 <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${main ? "bg-white/10 text-sun-400" : m.tile}`}>

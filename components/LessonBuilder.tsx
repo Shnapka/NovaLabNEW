@@ -44,13 +44,13 @@ export default function LessonBuilder(props: {
   const visible = inSection.filter((m) => topicId === "all" || m.topicId === topicId);
 
   const add = (m: Mod) =>
-    setBlocks([...blocks, { moduleId: m.id, config: m.type === "simulation" ? m.defaults : "{}" }]);
+    setBlocks([...blocks, { moduleId: m.id, config: m.type === "simulation" || m.type === "practice" ? m.defaults : "{}" }]);
   const addTopic = (id: number) =>
     setBlocks([
       ...blocks,
       ...props.modules
         .filter((m) => m.topicId === id)
-        .map((m) => ({ moduleId: m.id, config: m.type === "simulation" ? m.defaults : "{}" })),
+        .map((m) => ({ moduleId: m.id, config: m.type === "simulation" || m.type === "practice" ? m.defaults : "{}" })),
     ]);
   const remove = (i: number) => setBlocks(blocks.filter((_, idx) => idx !== i));
   const move = (i: number, d: number) => {

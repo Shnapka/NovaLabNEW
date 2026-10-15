@@ -3,19 +3,28 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { metaOf } from "@/lib/modules/meta";
 import ModuleRenderer, { type RenderableModule } from "./modules/ModuleRenderer";
+import type { ModuleEvent } from "./ModuleFrame";
 import Rich from "./modules/Rich";
 import Icon from "./Icon";
 
-type B = RenderableModule & { id: string };
+// moduleId нужен, чтобы привязать результат ученика к модулю урока
+export type PlayerBlock = RenderableModule & { id: string; moduleId?: string };
+type B = PlayerBlock;
 
 export default function LessonPlayer({
   title,
   blocks,
   backHref,
+  subtitle,
+  doneIds = [],
+  onModuleEvent,
 }: {
   title: string;
   blocks: B[];
   backHref?: string;
+  subtitle?: React.ReactNode;
+  doneIds?: string[]; // модули, где ученик уже получил результат
+  onModuleEvent?: (block: B, e: ModuleEvent) => void;
 }) {
   const [i, setI] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -51,7 +60,10 @@ export default function LessonPlayer({
     <div ref={rootRef} className="min-h-[calc(100vh-3.5rem)] overflow-y-auto bg-mist-50">
       <div className="bg-gradient-to-r from-ocean-900 to-ocean-700 text-white">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-4 sm:px-6">
-          <h1 className="mr-auto text-xl font-extrabold">{title}</h1>
+          <div className="mr-auto">
+            <h1 className="text-xl font-extrabold">{title}</h1>
+            {subtitle && <div className="text-sm text-aqua-200">{subtitle}</div>}
+          </div>
           <button onClick={toggleFullscreen} className="btn border border-white/25 text-white hover:bg-white/10">
             <Icon name="expand" className="h-4 w-4" /> На весь экран
           </button>
@@ -72,6 +84,7 @@ export default function LessonPlayer({
             >
               <Icon name={x.type} className="h-4 w-4" />
               {k + 1}. {metaOf(x.type).label}
+              {x.moduleId && doneIds.includes(x.moduleId) && <Icon name="check" className="h-3.5 w-3.5 text-emerald-300" />}
             </button>
           ))}
         </div>
@@ -84,7 +97,7 @@ export default function LessonPlayer({
         <section className="card p-5 sm:p-7">
           <h2 className="mb-5 text-2xl font-extrabold text-ocean-900"><Rich text={b.title} /></h2>
           {/* key заставляет создать модуль заново: старый Unity-инстанс уничтожается */}
-          <ModuleRenderer key={b.id} module={b} onEvent={(e) => console.log("событие модуля:", e)} />
+          <ModuleRenderer key={b.id} module={b} onEvent={(e) => (onModuleEvent ? onModuleEvent(b, e) : console.log("событие модуля:", e))} />
         </section>
 
         <div className="mt-5 flex items-center justify-between">

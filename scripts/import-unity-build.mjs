@@ -28,10 +28,10 @@ function walk(dir) {
 async function findSimulation(id) {
   const mod = await prisma.module.findUnique({ where: { id } });
   if (!mod) {
-    const sims = await prisma.module.findMany({ where: { type: "simulation" }, select: { id: true, title: true } });
+    const sims = await prisma.module.findMany({ where: { type: { in: ["simulation", "practice"] } }, select: { id: true, title: true } });
     fail(`Модуль «${id}» не найден. Доступные симуляции:\n${sims.map((s) => `   ${s.id} — ${s.title}`).join("\n")}`);
   }
-  if (mod.type !== "simulation") fail(`Модуль «${id}» — это ${mod.type}, а не симуляция.`);
+  if (mod.type !== "simulation" && mod.type !== "practice") fail(`Модуль «${id}» — это ${mod.type}, а не симуляция или практика.`);
   return mod;
 }
 

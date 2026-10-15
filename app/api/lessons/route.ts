@@ -25,7 +25,7 @@ export async function POST(req: Request) {
           create: topic.modules.map((m, i) => ({
             moduleId: m.id,
             position: i,
-            config: (m.type === "simulation" ? m.configSchema : {}) as Prisma.InputJsonValue,
+            config: (m.type === "simulation" || m.type === "practice" ? m.configSchema : {}) as Prisma.InputJsonValue,
           })),
         },
       },

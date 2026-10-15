@@ -12,6 +12,7 @@ import GraphModule from "./GraphModule";
 import QuizModule from "./QuizModule";
 import MatchingModule from "./MatchingModule";
 import SimulationModule from "./SimulationModule";
+import PracticeModule, { type PracticeContent } from "./PracticeModule";
 
 export type RenderableModule = {
   type: string;
@@ -37,6 +38,13 @@ export default function ModuleRenderer({
       return <QuizModule content={m.content as QuizContent} onEvent={onEvent} />;
     case "matching":
       return <MatchingModule content={m.content as MatchingContent} onEvent={onEvent} />;
+    case "practice":
+      // Если подключён Unity-билд практики — показываем его, иначе встроенный веб-конструктор задач
+      return m.buildUrl && !m.buildUrl.includes("/modules/placeholder/") ? (
+        <ModuleFrame src={m.buildUrl} config={{ ...(m.config as object), topic: (m.content as PracticeContent).topic }} onEvent={onEvent} />
+      ) : (
+        <PracticeModule content={m.content as PracticeContent} onEvent={onEvent} />
+      );
     case "simulation":
       return (
         <SimulationModule

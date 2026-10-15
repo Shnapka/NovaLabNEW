@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 
 // Если Unity-билд симуляции лежит в public/modules/<id модуля>/, подключаем его вместо заглушки
 function resolveBuildUrl(m: ModuleSeed) {
-  if (m.type === "simulation" && existsSync(join(__dirname, "..", "public", "modules", m.id, "index.html"))) {
+  if ((m.type === "simulation" || m.type === "practice") && existsSync(join(__dirname, "..", "public", "modules", m.id, "index.html"))) {
     return `/modules/${m.id}/index.html`;
   }
   return m.buildUrl ?? null;
