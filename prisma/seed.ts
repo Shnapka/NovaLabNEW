@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { Prisma, PrismaClient } from "@prisma/client";
 import { curriculum } from "../content/curriculum";
 import type { ModuleSeed } from "../lib/modules/types";
+import { ensureAdmin } from "../scripts/admin";
 
 const prisma = new PrismaClient();
 
@@ -63,6 +64,14 @@ async function main() {
     }
   }
   console.log(`Готово: классов ${curriculum.length}, тем ${topicCount}, модулей ${moduleCount}`);
+
+  // Администратор из переменных окружения (удобно на хостинге: задать ADMIN_EMAIL и ADMIN_PASSWORD в настройках сервиса)
+  const email = process.env.ADMIN_EMAIL?.trim();
+  const password = process.env.ADMIN_PASSWORD;
+  if (email && password) {
+    const r = await ensureAdmin(prisma, email, password, process.env.ADMIN_NAME);
+    console.log(`Администратор ${email}: ${r}`);
+  }
 }
 
 main().finally(() => prisma.$disconnect());

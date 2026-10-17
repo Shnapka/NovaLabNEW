@@ -19,6 +19,7 @@ export default function LessonPlayer({
   doneIds = [],
   onModuleEvent,
   renderBelow,
+  finale,
 }: {
   title: string;
   blocks: B[];
@@ -27,20 +28,23 @@ export default function LessonPlayer({
   doneIds?: string[]; // модули, где ученик уже получил результат
   onModuleEvent?: (block: B, e: ModuleEvent) => void;
   renderBelow?: (block: B) => React.ReactNode; // доп. блок под модулем (например, работа ученика)
+  finale?: { label: string; done?: boolean; content: React.ReactNode }; // завершающий шаг после модулей (оценка урока)
 }) {
   const [i, setI] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
-  const b = blocks[i];
+  const steps = blocks.length + (finale ? 1 : 0);
+  const atFinale = !!finale && i === blocks.length;
+  const b = blocks[Math.min(i, blocks.length - 1)];
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if ((e.target as HTMLElement).closest("input, textarea, select")) return;
-      if (e.key === "ArrowRight") setI((x) => Math.min(x + 1, blocks.length - 1));
+      if (e.key === "ArrowRight") setI((x) => Math.min(x + 1, steps - 1));
       if (e.key === "ArrowLeft") setI((x) => Math.max(x - 1, 0));
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [blocks.length]);
+  }, [steps]);
 
   function toggleFullscreen() {
     if (document.fullscreenElement) document.exitFullscreen();
@@ -89,27 +93,43 @@ export default function LessonPlayer({
               {x.moduleId && doneIds.includes(x.moduleId) && <Icon name="check" className="h-3.5 w-3.5 text-emerald-300" />}
             </button>
           ))}
+          {finale && (
+            <button
+              onClick={() => setI(blocks.length)}
+              className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition ${
+                atFinale ? "bg-sun-400 text-ocean-950" : "text-aqua-200 ring-1 ring-white/25 hover:bg-white/10"
+              }`}
+            >
+              <Icon name="star" className="h-4 w-4" />
+              {finale.label}
+              {finale.done && <Icon name="check" className="h-3.5 w-3.5 text-emerald-300" />}
+            </button>
+          )}
         </div>
         <div className="h-1 bg-ocean-950/40">
-          <div className="h-full bg-sun-400 transition-all" style={{ width: `${((i + 1) / blocks.length) * 100}%` }} />
+          <div className="h-full bg-sun-400 transition-all" style={{ width: `${((i + 1) / steps) * 100}%` }} />
         </div>
       </div>
 
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
-        <section className="card p-5 sm:p-7">
-          <h2 className="mb-5 text-2xl font-extrabold text-ocean-900"><Rich text={b.title} /></h2>
-          {/* key заставляет создать модуль заново: старый Unity-инстанс уничтожается */}
-          <ModuleRenderer key={b.id} module={b} onEvent={(e) => (onModuleEvent ? onModuleEvent(b, e) : console.log("событие модуля:", e))} />
-          {renderBelow?.(b)}
-        </section>
+        {atFinale ? (
+          finale.content
+        ) : (
+          <section className="card p-5 sm:p-7">
+            <h2 className="mb-5 text-2xl font-extrabold text-ocean-900"><Rich text={b.title} /></h2>
+            {/* key заставляет создать модуль заново: старый Unity-инстанс уничтожается */}
+            <ModuleRenderer key={b.id} module={b} onEvent={(e) => (onModuleEvent ? onModuleEvent(b, e) : console.log("событие модуля:", e))} />
+            {renderBelow?.(b)}
+          </section>
+        )}
 
         <div className="mt-5 flex items-center justify-between">
           <button disabled={i === 0} onClick={() => setI(i - 1)} className="btn-ghost">
             <Icon name="arrowLeft" className="h-4 w-4" /> Назад
           </button>
-          <span className="text-sm text-slate-500">Шаг {i + 1} из {blocks.length} · листайте стрелками ← →</span>
-          <button disabled={i === blocks.length - 1} onClick={() => setI(i + 1)} className="btn-primary">
-            Далее <Icon name="arrowRight" className="h-4 w-4" />
+          <span className="text-sm text-slate-500">Шаг {i + 1} из {steps} · листайте стрелками ← →</span>
+          <button disabled={i === steps - 1} onClick={() => setI(i + 1)} className="btn-primary">
+            {finale && i === blocks.length - 1 ? finale.label : "Далее"} <Icon name="arrowRight" className="h-4 w-4" />
           </button>
         </div>
       </main>

@@ -4,6 +4,7 @@ import { teacherSession } from "@/lib/authz";
 import { loadClassForTeacher } from "@/lib/classData";
 import { pct, scoreClass } from "@/lib/stats";
 import Icon from "@/components/Icon";
+import DeleteStudentButton from "@/components/class/DeleteStudentButton";
 
 const time = (d: Date) => d.toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
@@ -64,9 +65,12 @@ export default async function ClassStudentsPage({ params }: { params: Promise<{ 
                 <td className="px-3 py-2.5 text-center text-slate-600">{r.attempts}</td>
                 <td className="px-3 py-2.5 text-xs text-slate-500">{r.lastActivity ? time(r.lastActivity) : "—"}</td>
                 <td className="px-3 py-2.5 text-right">
-                  <Link href={`/classes/${id}/students/${r.id}`} className="inline-flex items-center gap-1 text-xs font-semibold text-ocean-700 hover:text-lagoon-700">
-                    Все работы <Icon name="arrowRight" className="h-3.5 w-3.5" />
-                  </Link>
+                  <div className="flex items-center justify-end gap-2">
+                    <Link href={`/classes/${id}/students/${r.id}`} className="inline-flex items-center gap-1 text-xs font-semibold text-ocean-700 hover:text-lagoon-700">
+                      Все работы <Icon name="arrowRight" className="h-3.5 w-3.5" />
+                    </Link>
+                    <DeleteStudentButton classId={id} studentId={r.id} name={r.name} attempts={r.attempts} hasAccount={r.hasAccount} />
+                  </div>
                 </td>
               </tr>
             ))}

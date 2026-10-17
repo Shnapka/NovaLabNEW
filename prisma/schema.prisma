@@ -22,7 +22,19 @@ model User {
   lessons      Lesson[]
   classrooms   Classroom[]
   memberships  Student[] // для роли STUDENT: участие в классах
+  reviews      TeacherReview[]
   createdAt    DateTime @default(now())
+}
+
+// Администратор платформы. Отдельно от пользователей сайта: регистрации через сайт нет,
+// создаётся только командой npm run admin:create или переменными ADMIN_EMAIL/ADMIN_PASSWORD при запуске.
+model Admin {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String?
+  passwordHash String
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
 }
 
 model Grade {
@@ -80,6 +92,8 @@ model Lesson {
   blocks      LessonBlock[]
   classrooms  Classroom[] // классы, которым урок назначен
   results     Result[]
+  feedback    LessonFeedback[]
+  reviews     TeacherReview[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 }
@@ -103,6 +117,8 @@ model Classroom {
   owner     User      @relation(fields: [ownerId], references: [id])
   students  Student[]
   lessons   Lesson[]
+  feedback  LessonFeedback[]
+  reviews   TeacherReview[]
   createdAt DateTime  @default(now())
 }
 
@@ -116,6 +132,7 @@ model Student {
   classroomId String
   classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
   results     Result[]
+  feedback    LessonFeedback[]
   createdAt   DateTime  @default(now())
 
   @@unique([classroomId, name])
@@ -138,4 +155,49 @@ model Result {
   createdAt DateTime @default(now())
 
   @@index([lessonId, studentId])
+}
+
+// Отзыв ученика в конце урока. Ссылки обнуляются при удалении ученика, класса или урока,
+// а названия сохранены копией — отзыв остаётся в панели администратора.
+model LessonFeedback {
+  id            String     @id @default(cuid())
+  rating        Int // 1..10
+  liked         String?
+  disliked      String?
+  studentId     String?
+  student       Student?   @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  lessonId      String?
+  lesson        Lesson?    @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  classroomId   String?
+  classroom     Classroom? @relation(fields: [classroomId], references: [id], onDelete: SetNull)
+  teacherId     String? // владелец класса на момент отзыва
+  lessonTitle   String
+  classroomName String
+  studentName   String
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@unique([studentId, lessonId])
+  @@index([classroomId])
+}
+
+// Анкета учителя после урока в классе
+model TeacherReview {
+  id            String     @id @default(cuid())
+  rating        Int // 1..10
+  answers       Json       @default("{}") // ответы на вопросы lib/feedback.ts: { questionId: value | value[] }
+  comment       String?
+  teacherId     String?
+  teacher       User?      @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  lessonId      String?
+  lesson        Lesson?    @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  classroomId   String?
+  classroom     Classroom? @relation(fields: [classroomId], references: [id], onDelete: SetNull)
+  lessonTitle   String
+  classroomName String
+  teacherName   String
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@unique([lessonId, classroomId])
 }

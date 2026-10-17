@@ -7,6 +7,7 @@ import { pct, scoreClass } from "@/lib/stats";
 import Rich from "@/components/modules/Rich";
 import Icon from "@/components/Icon";
 import AttemptLine from "@/components/class/AttemptLine";
+import DeleteStudentButton from "@/components/class/DeleteStudentButton";
 
 // Профиль ученика: все уроки класса, баллы по модулям и все попытки
 export default async function ClassStudentPage({ params }: { params: Promise<{ id: string; sid: string }> }) {
@@ -18,9 +19,20 @@ export default async function ClassStudentPage({ params }: { params: Promise<{ i
 
   return (
     <div className="space-y-6">
-      <Link href={`/classes/${id}/students`} className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-ocean-700">
-        <Icon name="arrowLeft" className="h-4 w-4" /> Все ученики
-      </Link>
+      <div className="flex items-center justify-between gap-3">
+        <Link href={`/classes/${id}/students`} className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-ocean-700">
+          <Icon name="arrowLeft" className="h-4 w-4" /> Все ученики
+        </Link>
+        <DeleteStudentButton
+          classId={id}
+          studentId={sid}
+          name={me.name}
+          attempts={me.attempts}
+          hasAccount={me.hasAccount}
+          redirectTo={`/classes/${id}/students`}
+          withLabel
+        />
+      </div>
 
       <section className="card flex flex-wrap items-center gap-6 p-5">
         <span className="flex h-14 w-14 items-center justify-center rounded-full bg-sun-400 text-2xl font-extrabold text-ocean-950">

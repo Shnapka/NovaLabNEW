@@ -13,8 +13,14 @@ export default async function ClassesPage() {
   const classes = await prisma.classroom.findMany({
     where: { ownerId: session.user.id },
     orderBy: { createdAt: "desc" },
-    include: { _count: { select: { students: true, lessons: true } } },
+    include: {
+      _count: { select: { students: true, lessons: true } },
+      lessons: { select: { id: true } },
+      reviews: { select: { lessonId: true } },
+    },
   });
+  // Сколько уроков каждого класса учитель ещё не оценил
+  const toReview = (c: (typeof classes)[number]) => c.lessons.filter((l) => !c.reviews.some((r) => r.lessonId === l.id)).length;
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
@@ -51,6 +57,11 @@ export default async function ClassesPage() {
                   <span className="flex items-center gap-1"><Icon name="users" className="h-4 w-4" /> {plural(c._count.students, ["ученик", "ученика", "учеников"])}</span>
                   <span className="flex items-center gap-1"><Icon name="layers" className="h-4 w-4" /> {plural(c._count.lessons, ["урок", "урока", "уроков"])}</span>
                 </div>
+                {toReview(c) > 0 && (
+                  <div className="mt-3 flex items-center gap-1.5 rounded-lg bg-sun-50 px-2.5 py-1.5 text-xs font-semibold text-sun-900">
+                    <Icon name="bell" className="h-3.5 w-3.5" /> Оцените {plural(toReview(c), ["урок", "урока", "уроков"])} — вкладка «Оценить уроки»
+                  </div>
+                )}
                 <div className="mt-4 flex items-center gap-1 text-sm font-semibold text-ocean-700">
                   <Icon name="chart" className="h-4 w-4" /> Открыть статистику
                   <Icon name="arrowRight" className="h-4 w-4 transition group-hover:translate-x-0.5" />

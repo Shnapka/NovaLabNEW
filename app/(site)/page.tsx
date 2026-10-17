@@ -30,7 +30,8 @@ function HeroArt() {
 export default async function Home() {
   const session = await auth();
   const isStudent = session?.user?.role === "STUDENT";
-  const cta = isStudent ? "/student" : session?.user ? "/library" : "/login?next=/library";
+  const isAdmin = session?.user?.role === "ADMIN";
+  const cta = isStudent ? "/student" : isAdmin ? "/admin" : session?.user ? "/library" : "/login?next=/library";
   const [grades, topics, ready] = await Promise.all([
     prisma.grade.count(),
     prisma.topic.count(),
@@ -58,7 +59,7 @@ export default async function Home() {
             {session?.user && (
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link href={cta} className="btn-accent px-6 py-3 text-base">
-                  {isStudent ? "К моим урокам" : "Открыть библиотеку"} <Icon name="arrowRight" />
+                  {isStudent ? "К моим урокам" : isAdmin ? "Панель администратора" : "Открыть библиотеку"} <Icon name="arrowRight" />
                 </Link>
               </div>
             )}

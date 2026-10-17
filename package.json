@@ -8,6 +8,7 @@
     "start": "prisma migrate deploy && prisma db seed && next start",
     "lint": "eslint",
     "unity:import": "node scripts/import-unity-build.mjs",
+    "admin:create": "tsx scripts/create-admin.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

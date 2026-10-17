@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Icon from "@/components/Icon";
 
-export default function ClassTabs({ classId, counts }: { classId: string; counts: { students: number; lessons: number } }) {
+export default function ClassTabs({ classId, counts }: { classId: string; counts: { students: number; lessons: number; feedback: number; toReview: number } }) {
   const path = usePathname();
   const base = `/classes/${classId}`;
   const tabs = [
@@ -11,6 +11,8 @@ export default function ClassTabs({ classId, counts }: { classId: string; counts
     { href: `${base}/lessons`, label: "По уроку", icon: "layers", active: path.startsWith(`${base}/lessons`) },
     { href: `${base}/students`, label: `Ученики · ${counts.students}`, icon: "users", active: path.startsWith(`${base}/students`) },
     { href: `${base}/manage`, label: `Уроки класса · ${counts.lessons}`, icon: "book", active: path.startsWith(`${base}/manage`) },
+    { href: `${base}/feedback`, label: `Отзывы учеников · ${counts.feedback}`, icon: "message", active: path.startsWith(`${base}/feedback`) },
+    { href: `${base}/reviews`, label: "Оценить уроки", icon: "bell", active: path.startsWith(`${base}/reviews`), badge: counts.toReview },
   ];
   return (
     <nav className="flex gap-1 overflow-x-auto overflow-y-hidden border-b border-mist-200">
@@ -23,6 +25,9 @@ export default function ClassTabs({ classId, counts }: { classId: string; counts
           }`}
         >
           <Icon name={t.icon} className="h-4 w-4" /> {t.label}
+          {"badge" in t && t.badge ? (
+            <span title="Уроки, которые вы ещё не оценили" className="ml-0.5 rounded-full bg-sun-400 px-1.5 text-xs font-extrabold text-ocean-950">{t.badge}</span>
+          ) : null}
         </Link>
       ))}
     </nav>

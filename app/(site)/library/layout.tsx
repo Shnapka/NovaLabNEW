@@ -6,5 +6,6 @@ export default async function LibraryLayout({ children }: { children: React.Reac
   const session = await auth();
   if (!session?.user) redirect("/login?next=/library");
   if (session.user.role === "STUDENT") redirect("/student");
+  if (session.user.role === "ADMIN") redirect("/admin");
   return <>{children}</>;
 }

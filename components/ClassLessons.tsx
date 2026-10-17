@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { plural } from "@/lib/plural";
 import Icon from "./Icon";
+import { useConfirm } from "./ConfirmDialog";
 
 type L = { id: string; title: string; blocks: number; group: string; topic: string | null };
 type T = { id: number; title: string; grade: number; paragraph: string | null; section: string };
@@ -22,6 +23,7 @@ export default function ClassLessons({ classId, assigned, myOther, topics }: { c
   const [tab, setTab] = useState<"library" | "mine">("library");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [ask, dialog] = useConfirm();
 
   async function call(key: string, method: "POST" | "PUT", body: object) {
     setBusy(key);
@@ -37,16 +39,32 @@ export default function ClassLessons({ classId, assigned, myOther, topics }: { c
     router.refresh();
   }
 
-  const remove = (l: L) => {
-    if (confirm(`Убрать урок «${l.title}» из класса? Ученики перестанут его видеть, результаты сохранятся.`)) {
-      call(l.id, "PUT", { lessonId: l.id, assigned: false });
-    }
+  const remove = async (l: L) => {
+    const ok = await ask({
+      title: `Убрать урок «${l.title}» из класса?`,
+      text: (
+        <>
+          <p>Ученики перестанут видеть урок.</p>
+          <p>Сам урок останется в «Моих уроках», а результаты учеников сохранятся — урок можно вернуть в класс в любой момент.</p>
+        </>
+      ),
+      confirmLabel: "Убрать из класса",
+    });
+    if (ok) call(l.id, "PUT", { lessonId: l.id, assigned: false });
   };
+  const addAgain = async (t: T) =>
+    (await ask({
+      title: "Этот урок уже есть в классе",
+      text: "Добавить ещё одну копию урока по этой теме?",
+      confirmLabel: "Добавить копию",
+      danger: false,
+    })) && call(`t${t.id}`, "POST", { topicId: t.id });
   // Тема уже есть в классе (урок собран из неё) — подсказываем, чтобы не создать копию случайно
   const assignedTopics = new Set(assigned.map((l) => l.topic).filter(Boolean));
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
+      {dialog}
       <section className="card p-5">
         <h2 className="text-lg font-bold text-ocean-900">Уроки класса</h2>
         <p className="mb-4 text-sm text-slate-500">
@@ -132,7 +150,7 @@ export default function ClassLessons({ classId, assigned, myOther, topics }: { c
                               {already && <div className="text-xs text-emerald-700">✓ уже есть в классе</div>}
                             </div>
                             <button
-                              onClick={() => (!already || confirm("Этот урок уже есть в классе. Добавить ещё одну копию?")) && call(`t${t.id}`, "POST", { topicId: t.id })}
+                              onClick={() => (already ? addAgain(t) : call(`t${t.id}`, "POST", { topicId: t.id }))}
                               disabled={busy !== null}
                               className={already ? "btn-ghost shrink-0 py-1.5" : "btn-primary shrink-0 py-1.5"}
                             >

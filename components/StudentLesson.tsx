@@ -3,6 +3,7 @@ import { useState } from "react";
 import LessonPlayer, { type PlayerBlock } from "./LessonPlayer";
 import type { ModuleEvent } from "./ModuleFrame";
 import PracticeLog, { type PracticeAttempt } from "./PracticeLog";
+import StudentFeedback, { type MyFeedback } from "./feedback/StudentFeedback";
 
 // События модулей, которые идут в статистику учителя
 const GRADED_EVENTS = ["quiz-result", "matching-result", "taskResult", "challengeSummary"];
@@ -14,6 +15,7 @@ export default function StudentLesson({
   blocks,
   initialDone,
   initialPractice,
+  initialFeedback,
 }: {
   lessonId: string;
   title: string;
@@ -21,7 +23,9 @@ export default function StudentLesson({
   blocks: PlayerBlock[];
   initialDone: string[];
   initialPractice: Record<string, PracticeAttempt[]>; // moduleId → задачи ученика, новые сверху
+  initialFeedback: MyFeedback;
 }) {
+  const [feedback, setFeedback] = useState(initialFeedback);
   const [done, setDone] = useState(initialDone);
   const [practice, setPractice] = useState(initialPractice);
   const [toast, setToast] = useState<{ ok: boolean; text: string } | null>(null);
@@ -67,6 +71,11 @@ export default function StudentLesson({
         backHref="/student"
         doneIds={done}
         onModuleEvent={report}
+        finale={{
+          label: "Оценка урока",
+          done: !!feedback,
+          content: <StudentFeedback lessonId={lessonId} initial={feedback} onSaved={setFeedback} />,
+        }}
         renderBelow={(b) =>
           b.type === "practice" && b.moduleId ? (
             <PracticeLog

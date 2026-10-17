@@ -8,6 +8,7 @@ import { plural } from "@/lib/plural";
 import Rich from "./modules/Rich";
 import Icon from "./Icon";
 import ContentEditorModal from "./editors/ContentEditorModal";
+import { useConfirm } from "./ConfirmDialog";
 
 type Mod = {
   id: string;
@@ -52,6 +53,7 @@ export default function LessonBuilder(props: {
   const [drag, setDrag] = useState<Drag>(null);
   const [dropAt, setDropAt] = useState<number | null>(null);
   const [editing, setEditing] = useState<number | null>(null);
+  const [ask, dialog] = useConfirm();
   const savedRef = useRef(JSON.stringify({ t: props.initialTitle, p: props.initialPublished, b: props.initialBlocks }));
 
   const snapshot = JSON.stringify({ t: title, p: published, b: blocks.map(({ moduleId, config }) => ({ moduleId, config })) });
@@ -135,14 +137,18 @@ export default function LessonBuilder(props: {
   }
 
   async function deleteLesson() {
-    const warn = [
-      `Удалить урок «${title}» навсегда?`,
-      props.usage.classes ? `Он исчезнет у ${plural(props.usage.classes, ["класса", "классов", "классов"])}.` : "",
-      props.usage.results ? `Будут удалены и результаты учеников по нему: ${props.usage.results}.` : "",
-    ]
-      .filter(Boolean)
-      .join("\n");
-    if (!confirm(warn)) return;
+    const ok = await ask({
+      title: `Удалить урок «${title}» навсегда?`,
+      text: (
+        <>
+          {props.usage.classes > 0 && <p>Он исчезнет у {plural(props.usage.classes, ["класса", "классов", "классов"])}.</p>}
+          {props.usage.results > 0 && <p>Будут удалены и результаты учеников по нему: {props.usage.results}.</p>}
+          <p>Отменить удаление нельзя.</p>
+        </>
+      ),
+      confirmLabel: "Удалить урок",
+    });
+    if (!ok) return;
     const r = await fetch(`/api/lessons/${props.lessonId}`, { method: "DELETE" });
     if (r.ok) {
       savedRef.current = snapshot; // чтобы не спрашивать о несохранённых изменениях
@@ -157,6 +163,7 @@ export default function LessonBuilder(props: {
 
   return (
     <main className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 md:grid-cols-[340px_1fr]">
+      {dialog}
       {/* Модули из библиотеки */}
       <aside className="card space-y-2 p-4 md:sticky md:top-20 md:self-start">
         <h2 className="font-bold text-ocean-900">Модули из библиотеки</h2>
