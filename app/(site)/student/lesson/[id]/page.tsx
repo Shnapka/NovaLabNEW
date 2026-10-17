@@ -37,6 +37,7 @@ export default async function StudentLessonPage({ params }: { params: Promise<{ 
       expected: Number(d.expected),
       unit: String(d.unit ?? ""),
       difficulty: Number(d.difficulty ?? 1),
+      solution: typeof d.solutionText === "string" ? d.solutionText : "",
       at: r.createdAt.toISOString(),
     });
   }

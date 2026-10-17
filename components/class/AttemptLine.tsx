@@ -25,8 +25,13 @@ export default function AttemptLine({ r, title }: { r: ResultRow; title: string 
             {!r.correct && <span className="text-slate-600"> · правильно: <b>{num(d.expected)} {String(d.unit ?? "")}</b></span>}
             <span className="text-sun-600"> · сложность {"★".repeat(Number(d.difficulty ?? 1))}</span>
           </p>
-          {typeof d.solutionText === "string" && d.solutionText.trim() && (
-            <pre className="whitespace-pre-wrap rounded-lg bg-mist-50 p-2 font-mono text-xs text-slate-700">{d.solutionText}</pre>
+          {typeof d.solutionText === "string" && d.solutionText.trim() ? (
+            <div>
+              <div className="mt-1.5 text-xs font-semibold text-slate-500">Решение ученика</div>
+              <pre className="mt-0.5 whitespace-pre-wrap rounded-lg border-l-4 border-lagoon-500 bg-mist-50 p-2 font-mono text-xs text-slate-700">{d.solutionText}</pre>
+            </div>
+          ) : (
+            <p className="text-xs italic text-slate-400">Решение не записано — только ответ</p>
           )}
         </div>
       ) : (

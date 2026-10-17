@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { getStudentContext, resolveStudentForLesson } from "@/lib/student";
 import { checkPractice } from "@/lib/practice";
+import { SOLUTION_MAX } from "@/lib/practice/common";
 
 const schema = z.object({
   lessonId: z.string(),
@@ -87,7 +88,7 @@ export async function POST(req: Request) {
         expected: r.expected,
         unit: r.unitLabel,
         difficulty: r.difficulty,
-        solutionText: typeof d.solutionText === "string" ? d.solutionText.slice(0, 2000) : undefined,
+        solutionText: typeof d.solutionText === "string" && d.solutionText.trim() ? d.solutionText.trim().slice(0, SOLUTION_MAX) : undefined,
       };
       response = { correct: r.correct, expected: r.expected, answer: r.answer, unit: r.unitLabel, statement: r.statement, difficulty: r.difficulty };
       break;
@@ -97,7 +98,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, stored: false });
   }
 
-  await prisma.result.create({
+  const saved = await prisma.result.create({
     data: {
       studentId: student.id,
       lessonId,
@@ -108,5 +109,5 @@ export async function POST(req: Request) {
       detail: detail as Prisma.InputJsonValue,
     },
   });
-  return NextResponse.json({ ok: true, stored: true, ...response });
+  return NextResponse.json({ ok: true, stored: true, id: saved.id, ...response });
 }

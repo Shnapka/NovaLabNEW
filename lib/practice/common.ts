@@ -2,6 +2,9 @@
 // Этот код выполняется и в браузере (мгновенная проверка), и на сервере (проверка для статистики),
 // поэтому формат задачи — единый контракт и для веб-модуля, и для будущих Unity-симуляций.
 
+/** Длина записанного решения ученика (Дано / СИ / Решение) */
+export const SOLUTION_MAX = 4000;
+
 export type Quantity = { value: number; unit: string };
 export type Unit = { label: string; toSI: number };
 export type UnitTable = Record<string, Unit>;

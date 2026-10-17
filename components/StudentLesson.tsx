@@ -44,13 +44,14 @@ export default function StudentLesson({
       setDone((d) => (d.includes(moduleId) ? d : [...d, moduleId]));
       if (e.type === "taskResult" && data.statement) {
         const attempt: PracticeAttempt = {
-          id: `new-${Date.now()}`,
+          id: data.id ?? `new-${Date.now()}`,
           correct: !!data.correct,
           statement: data.statement,
           answer: data.answer,
           expected: data.expected,
           unit: data.unit,
           difficulty: data.difficulty ?? 1,
+          solution: String((e.data as { solutionText?: unknown } | undefined)?.solutionText ?? "").trim(),
           at: new Date().toISOString(),
         };
         setPractice((p) => ({ ...p, [moduleId]: [attempt, ...(p[moduleId] ?? [])] }));
@@ -81,6 +82,9 @@ export default function StudentLesson({
             <PracticeLog
               attempts={practice[b.moduleId] ?? []}
               goal={Number((b.content as { goal?: number } | null)?.goal ?? 3)}
+              onSolution={(id, text) =>
+                setPractice((p) => ({ ...p, [b.moduleId!]: (p[b.moduleId!] ?? []).map((x) => (x.id === id ? { ...x, solution: text } : x)) }))
+              }
             />
           ) : null
         }

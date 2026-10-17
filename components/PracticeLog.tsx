@@ -1,3 +1,6 @@
+"use client";
+import { useState } from "react";
+import { SOLUTION_MAX } from "@/lib/practice/common";
 import Rich from "./modules/Rich";
 
 export type PracticeAttempt = {
@@ -8,6 +11,7 @@ export type PracticeAttempt = {
   expected: number;
   unit: string;
   difficulty: number;
+  solution: string; // ход решения, который записал ученик (видит учитель)
   at: string; // ISO
 };
 
@@ -15,7 +19,15 @@ const num = (n: number) => n.toLocaleString("ru-RU", { maximumSignificantDigits:
 const time = (iso: string) => new Date(iso).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 // Работа ученика в практике на этом уроке: прогресс и все задачи — то же, что видит учитель
-export default function PracticeLog({ attempts, goal }: { attempts: PracticeAttempt[]; goal: number }) {
+export default function PracticeLog({
+  attempts,
+  goal,
+  onSolution,
+}: {
+  attempts: PracticeAttempt[];
+  goal: number;
+  onSolution?: (id: string, text: string) => void; // решение сохранено на сервере
+}) {
   const solved = attempts.filter((a) => a.correct).length;
   const accuracy = attempts.length ? Math.round((solved / attempts.length) * 100) : null;
   return (
@@ -31,7 +43,7 @@ export default function PracticeLog({ attempts, goal }: { attempts: PracticeAtte
       </div>
       {attempts.length === 0 ? (
         <p className="mt-2 text-sm text-slate-500">
-          Составь и реши задачу в симуляции — после проверки она появится здесь и в твоей статистике, а учитель увидит результат.
+          Составь и реши задачу в симуляции — после проверки она появится здесь и в твоей статистике, а учитель увидит ответ и решение.
         </p>
       ) : (
         <ul className="mt-3 space-y-2">
@@ -47,10 +59,69 @@ export default function PracticeLog({ attempts, goal }: { attempts: PracticeAtte
                 Мой ответ: <b>{num(a.answer)} {a.unit}</b>
                 {!a.correct && <> · правильный: <b>{num(a.expected)} {a.unit}</b></>}
               </p>
+              <Solution attempt={a} onSaved={onSolution} />
             </li>
           ))}
         </ul>
       )}
     </section>
   );
+}
+
+function Solution({ attempt, onSaved }: { attempt: PracticeAttempt; onSaved?: (id: string, text: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState(attempt.solution);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  // Только что решённая задача ещё не получила id с сервера — редактировать её решение пока нельзя
+  const editable = !!onSaved && !attempt.id.startsWith("new-");
+
+  async function save() {
+    setBusy(true);
+    setError("");
+    const r = await fetch(`/api/results/${attempt.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ solutionText: text }),
+    });
+    const data = await r.json().catch(() => ({}));
+    setBusy(false);
+    if (!r.ok) return setError(data.error ?? "Не удалось сохранить решение");
+    onSaved?.(attempt.id, text.trim());
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <div className="mt-2">
+        <textarea
+          autoFocus
+          className="input h-28 font-mono text-sm"
+          maxLength={SOLUTION_MAX}
+          placeholder={"Дано: …\nСИ: …\nРешение: …\nОтвет: …"}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+        />
+        {error && <p className="mt-1 text-sm text-rose-700">{error}</p>}
+        <div className="mt-2 flex gap-2">
+          <button onClick={save} disabled={busy} className="btn-primary py-1.5 text-sm">{busy ? "Сохраняю…" : "Сохранить решение"}</button>
+          <button onClick={() => { setEditing(false); setText(attempt.solution); }} className="btn-ghost py-1.5 text-sm">Отмена</button>
+        </div>
+      </div>
+    );
+  }
+
+  return attempt.solution ? (
+    <div className="mt-2">
+      <div className="mb-1 flex items-center justify-between text-xs font-semibold text-slate-500">
+        Моё решение
+        {editable && <button onClick={() => setEditing(true)} className="font-semibold text-ocean-700 hover:underline">Изменить</button>}
+      </div>
+      <pre className="whitespace-pre-wrap rounded-lg bg-mist-50 p-2 font-mono text-xs text-slate-700">{attempt.solution}</pre>
+    </div>
+  ) : editable ? (
+    <button onClick={() => setEditing(true)} className="mt-2 text-sm font-semibold text-ocean-700 hover:underline">
+      + Добавить решение — его увидит учитель
+    </button>
+  ) : null;
 }
