@@ -55,7 +55,6 @@ export type GraphScene =
       sinks: string; // 1 — тонет, 0 — плавает
     };
 
-export type GraphCheck = { text: string; expr: string; unit: string; explain?: string };
 
 export type GraphChart = {
   title: string;
@@ -68,7 +67,6 @@ export type GraphChart = {
   readouts?: { label: string; expr: string; unit: string }[]; // могут зависеть от x (значение в точке бегунка)
   playhead?: { label: string; duration?: number }; // бегунок по оси x с кнопкой ▶ (duration — секунд на весь проход)
   scene?: GraphScene;
-  checks?: GraphCheck[]; // «Найди по графику» — ответ проверяется сразу
   question?: string;
 };
 

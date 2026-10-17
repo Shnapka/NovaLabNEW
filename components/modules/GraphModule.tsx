@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import type { GraphChart, GraphCheck, GraphContent } from "@/lib/modules/types";
+import type { GraphChart, GraphContent } from "@/lib/modules/types";
 import { compile, fmt } from "@/lib/modules/expr";
 import Rich from "./Rich";
 import { BoatScene, DiveScene, FloatScene, RaceScene } from "./GraphScenes";
@@ -25,45 +25,6 @@ function ticks(min: number, max: number) {
   return out;
 }
 
-/** Проверка ответа «по графику»: 2 % или 0,01 */
-function CheckItem({ check, value, unit }: { check: GraphCheck; value: number; unit: string }) {
-  const [answer, setAnswer] = useState("");
-  const [state, setState] = useState<"idle" | "ok" | "bad">("idle");
-  const verify = () => {
-    const a = Number(answer.replace(",", ".").replace(/\s/g, ""));
-    setState(Number.isFinite(a) && Math.abs(a - value) <= Math.max(Math.abs(value) * 0.02, 0.01) ? "ok" : "bad");
-  };
-  return (
-    <li className="rounded-xl bg-white p-3 ring-1 ring-mist-100">
-      <p className="text-sm text-slate-700"><Rich text={check.text} /></p>
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        <input
-          inputMode="decimal"
-          className="input w-32 py-1.5 font-mono"
-          placeholder="ответ"
-          value={answer}
-          onChange={(e) => {
-            setAnswer(e.target.value);
-            setState("idle");
-          }}
-          onKeyDown={(e) => e.key === "Enter" && answer.trim() && verify()}
-        />
-        <span className="text-sm text-slate-500">{unit}</span>
-        <button disabled={!answer.trim()} onClick={verify} className="btn-primary py-1.5">Проверить</button>
-        {state === "ok" && <span className="text-sm font-semibold text-emerald-700">✓ Верно!</span>}
-        {state === "bad" && (
-          <span className="text-sm font-semibold text-rose-700">
-            ✗ Правильно: {fmt(value, 3)} {unit}
-          </span>
-        )}
-      </div>
-      {state !== "idle" && check.explain && (
-        <p className="mt-2 rounded-lg bg-mist-50 px-3 py-2 text-xs text-slate-600"><Rich text={check.explain} /></p>
-      )}
-    </li>
-  );
-}
-
 function Chart({ chart }: { chart: GraphChart }) {
   const keys = useMemo(() => chart.params.map((p) => p.key), [chart]);
   const vars = useMemo(() => ["x", ...keys], [keys]);
@@ -78,7 +39,6 @@ function Chart({ chart }: { chart: GraphChart }) {
 
   const fns = useMemo(() => chart.series.map((s) => compile(s.expr, vars)), [chart, vars]);
   const readFns = useMemo(() => (chart.readouts ?? []).map((r) => compile(r.expr, vars)), [chart, vars]);
-  const checkFns = useMemo(() => (chart.checks ?? []).map((c) => compile(c.expr, vars)), [chart, vars]);
   const sceneFns = useMemo(() => {
     const s = chart.scene;
     if (!s) return null;
@@ -325,18 +285,6 @@ function Chart({ chart }: { chart: GraphChart }) {
               <Rich text={r.label} />: <span className="font-mono font-semibold">{fmt(at(readFns[i], chart.playhead ? playX : xMax))} {r.unit}</span>
             </div>
           ))}
-        </div>
-      )}
-
-      {chart.checks && chart.checks.length > 0 && (
-        <div className="rounded-xl bg-lagoon-50 p-3">
-          <div className="mb-2 text-sm font-bold text-ocean-900">Найди по графику</div>
-          <ul className="space-y-2">
-            {chart.checks.map((c, i) => (
-              // key с параметрами: при смене параметров вопрос «сбрасывается»
-              <CheckItem key={`${i}-${pv.join(",")}`} check={c} value={at(checkFns[i], playX)} unit={c.unit} />
-            ))}
-          </ul>
         </div>
       )}
 
