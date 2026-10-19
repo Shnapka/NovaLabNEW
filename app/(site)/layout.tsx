@@ -15,7 +15,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <header className="sticky top-0 z-30 bg-ocean-700 shadow-[0_2px_12px_rgba(1,62,86,0.25)]">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:gap-6 sm:px-6">
           <Link href="/" className="flex items-center gap-2 text-lg font-extrabold tracking-tight text-white">
-            <Logo />
+            <Logo className="h-10 w-10" />
             <span className="hidden sm:inline">Nova<span className="text-sun-400">Lab</span></span>
           </Link>
           {session?.user && !isAdmin ? <NavLinks role={session.user.role} /> : student ? <NavLinks role="STUDENT" /> : null}

@@ -36,13 +36,15 @@ export default function Icon({ name, className = "h-5 w-5" }: { name: string; cl
 }
 
 // Логотип NovaLab: вспыхивающая звезда («нова») на орбите
+// Знак NovaLab «Нова-монограмма»: звезда-вспышка с гранью, N в негативе и белая L (исходник — NovaLab.svg, страница 1)
 export function Logo({ className = "h-8 w-8" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 32 32" className={className} aria-hidden>
-      <rect width="32" height="32" rx="9" fill="#01597B" />
-      <ellipse cx="16" cy="16" rx="12" ry="5" fill="none" stroke="#99D8DE" strokeWidth="1.6" transform="rotate(-25 16 16)" />
-      <path d="M16 5.5c.9 6 3.6 8.7 9.5 10.5-5.9 1.8-8.6 4.5-9.5 10.5-.9-6-3.6-8.7-9.5-10.5 5.9-1.8 8.6-4.5 9.5-10.5Z" fill="#F2BA00" />
-      <circle cx="26.2" cy="11.2" r="1.7" fill="#E2E8ED" />
+    <svg viewBox="0 0 512 512" className={className} aria-hidden>
+      <rect width="512" height="512" rx="112" fill="#01597B" />
+      <path d="M256 40Q286.24 225.76 472 256Q286.24 286.24 256 472Q225.76 286.24 40 256Q225.76 225.76 256 40Z" fill="#F2BA00" />
+      <path d="M256 40Q286.24 225.76 472 256Q286.24 286.24 256 472Z" fill="#DBA800" />
+      <path d="M168 322 196 190 252 322 280 190" fill="none" stroke="#01597B" strokeWidth="26" strokeMiterlimit="10" />
+      <path d="M308 190 284 322H346" fill="none" stroke="#FFFFFF" strokeWidth="26" strokeMiterlimit="10" />
     </svg>
   );
 }

@@ -15,7 +15,7 @@ export default async function AdminPanelLayout({ children }: { children: React.R
       <header className="sticky top-0 z-30 bg-slate-900 text-white">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4 sm:px-6">
           <Link href="/admin" className="flex items-center gap-2 font-extrabold">
-            <Logo />
+            <Logo className="h-10 w-10" />
             <span className="hidden sm:inline">NovaLab</span>
             <span className="rounded bg-sun-400 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-slate-900">admin</span>
           </Link>
