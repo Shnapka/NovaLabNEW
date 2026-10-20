@@ -83,12 +83,17 @@
 /* Анимация знака NovaLab на главной */
 @keyframes nova-float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
 @keyframes nova-glow { 0%, 100% { opacity: .7; transform: scale(.97); } 50% { opacity: 1; transform: scale(1.04); } }
-@keyframes nova-orbit { to { transform: rotate(360deg); } }
 @keyframes nova-twinkle { 0%, 100% { opacity: .25; transform: scale(.6); } 50% { opacity: 1; transform: scale(1); } }
 .nova-float { animation: nova-float 6s ease-in-out infinite; transform-origin: 50% 50%; }
 .nova-glow { animation: nova-glow 4s ease-in-out infinite; transform-origin: 256px 256px; transform-box: view-box; }
-.nova-orbit { animation: nova-orbit 14s linear infinite; transform-origin: 256px 256px; transform-box: view-box; }
+.nova-star, .nova-glow-wrap { transform-origin: 256px 256px; transform-box: view-box; }
+.nova-star { transition: transform .6s cubic-bezier(.25, 1.6, .45, 1); }
+.nova-glow-wrap { transition: transform .8s ease, opacity .8s ease; opacity: .85; }
+.nova-logo:hover .nova-star { transform: scale(1.08) rotate(-8deg); }
+.nova-logo:hover .nova-glow-wrap { transform: scale(1.12); opacity: 1; }
+.nova-logo:hover .nova-twinkle { animation-duration: .9s; }
+.nova-logo:active .nova-star { transform: scale(.96) rotate(4deg); transition-duration: .15s; }
 .nova-twinkle { animation: nova-twinkle 2.6s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
 .nova-twinkle--mid { animation-delay: .9s; }
 .nova-twinkle--late { animation-delay: 1.7s; }
-@media (prefers-reduced-motion: reduce) { .nova-float, .nova-glow, .nova-orbit, .nova-twinkle { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .nova-float, .nova-glow, .nova-twinkle { animation: none; } .nova-star, .nova-glow-wrap { transition: none; } }

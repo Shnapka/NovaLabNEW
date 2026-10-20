@@ -4,23 +4,24 @@ import { prisma } from "@/lib/db";
 import { MODULE_META, TYPE_ORDER } from "@/lib/modules/meta";
 import Icon from "@/components/Icon";
 
-// Знак NovaLab на главной: буква N вырезана из звезды (сквозь неё видно фон), лёгкая анимация — парение, блик, искры
+// Знак NovaLab на главной: буква N вырезана из звезды (сквозь неё видно фон), лёгкая анимация — парение, блик, искры.
+// При наведении звезда пружинисто поворачивается и увеличивается, свечение разгорается, искры вспыхивают.
 function HeroLogo() {
   return (
-    <svg viewBox="0 0 512 512" className="nova-float h-full w-full overflow-visible" aria-label="NovaLab">
+    <svg viewBox="0 0 512 512" className="nova-logo nova-float h-full w-full cursor-pointer overflow-visible" aria-label="NovaLab">
       <defs>
         {/* свечение кольцом: в центре пусто, чтобы сквозь N был виден синий фон */}
         <radialGradient id="hero-glow" cx="256" cy="256" r="330" gradientUnits="userSpaceOnUse">
           <stop offset="0" stopColor="#F2BA00" stopOpacity="0" />
-          <stop offset="0.5" stopColor="#F2BA00" stopOpacity="0" />
-          <stop offset="0.68" stopColor="#F2BA00" stopOpacity="0.42" />
-          <stop offset="0.82" stopColor="#F2BA00" stopOpacity="0.16" />
+          <stop offset="0.45" stopColor="#F2BA00" stopOpacity="0" />
+          <stop offset="0.66" stopColor="#F2BA00" stopOpacity="0.32" />
+          <stop offset="0.86" stopColor="#F2BA00" stopOpacity="0.1" />
           <stop offset="1" stopColor="#F2BA00" stopOpacity="0" />
         </radialGradient>
-        <radialGradient id="hero-orbit-light">
-          <stop offset="0" stopColor="#FFE38A" stopOpacity="0.95" />
-          <stop offset="1" stopColor="#F2BA00" stopOpacity="0" />
-        </radialGradient>
+        {/* сильное размытие — свечение мягкое, без резкой границы */}
+        <filter id="hero-blur" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="26" />
+        </filter>
         {/* маска: звезда видна везде, кроме буквы N — там «дырка» */}
         <mask id="hero-cut" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
           <rect width="512" height="512" fill="#fff" />
@@ -35,13 +36,10 @@ function HeroLogo() {
           <stop offset="1" stopColor="#fff" stopOpacity="0" />
         </linearGradient>
       </defs>
-      <circle className="nova-glow" cx="256" cy="256" r="330" fill="url(#hero-glow)" />
-      <circle cx="256" cy="256" r="232" fill="none" stroke="#99D8DE" strokeOpacity="0.18" strokeWidth="2" />
-      {/* огонёк, который медленно обходит знак по орбите */}
-      <g className="nova-orbit">
-        <circle cx="256" cy="24" r="46" fill="url(#hero-orbit-light)" />
-        <circle cx="256" cy="24" r="5" fill="#FFF6CC" />
+      <g className="nova-glow-wrap">
+        <circle className="nova-glow" cx="256" cy="256" r="330" fill="url(#hero-glow)" filter="url(#hero-blur)" />
       </g>
+      <g className="nova-star">
       <g mask="url(#hero-cut)">
         <path d="M256 40Q286.24 225.76 472 256Q286.24 286.24 256 472Q225.76 286.24 40 256Q225.76 225.76 256 40Z" fill="#F2BA00" />
         <path d="M256 40Q286.24 225.76 472 256Q286.24 286.24 256 472Z" fill="#DBA800" />
@@ -53,6 +51,7 @@ function HeroLogo() {
         </g>
       </g>
       <path d="M308 190 284 322H346" fill="none" stroke="#FFFFFF" strokeWidth="26" strokeMiterlimit="10" />
+      </g>
       {/* искры */}
       <path className="nova-twinkle" d="M430 70q4 22 26 26q-22 4-26 26q-4-22-26-26q22-4 26-26Z" fill="#FFFFFF" />
       <path className="nova-twinkle nova-twinkle--late" d="M82 400q3 16 19 19q-16 3-19 19q-3-16-19-19q16-3 19-19Z" fill="#99D8DE" />
