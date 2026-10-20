@@ -35,8 +35,8 @@ export default function JournalTable({ classId, lessons, rows }: { classId: stri
   if (lessons.length === 0) {
     return (
       <div className="card p-8 text-center text-slate-500">
-        В классе пока нет уроков.{" "}
-        <Link href={`/classes/${classId}/manage`} className="font-semibold text-ocean-700">Добавьте первый урок</Link>.
+        В выбранной четверти или разделе пока нет уроков.{" "}
+        <Link href={`/classes/${classId}/manage`} className="font-semibold text-ocean-700">Добавьте урок</Link> или откройте «Весь год».
       </div>
     );
   }

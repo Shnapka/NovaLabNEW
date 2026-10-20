@@ -199,7 +199,7 @@ export default async function Home() {
             {ready.map((t) => (
               <Link key={t.id} href={session?.user ? `/library/topic/${t.id}` : cta} className="card group p-6 transition hover:-translate-y-0.5 hover:border-lagoon-500">
                 <div className="text-sm font-medium text-lagoon-700">
-                  {t.section.grade.number} класс · {t.paragraph}
+                  {t.section.grade.number} класс · {t.paragraph ?? t.section.title}
                 </div>
                 <div className="mt-1 text-lg font-bold text-ocean-900">{t.title}</div>
                 <div className="mt-4 flex gap-1.5">

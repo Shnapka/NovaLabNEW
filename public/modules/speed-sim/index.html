@@ -56,11 +56,12 @@
         var json = JSON.stringify(d.config || {});
         if (d.type === "init") instance.SendMessage("ModuleRoot", "Init", json);
         else if (d.type === "set") instance.SendMessage("ModuleRoot", "SetParams", json);
+        else if (d.type === "uiScale") instance.SendMessage("ModuleRoot", "SetUiScale", String(d.value));
       }
 
       window.addEventListener("message", function (e) {
         var d = e.data;
-        if (!d || d.source !== "physlab-host" || (d.type !== "init" && d.type !== "set")) return;
+        if (!d || d.source !== "physlab-host" || (d.type !== "init" && d.type !== "set" && d.type !== "uiScale")) return;
         if (instance) deliver(d); else queue.push(d);
       });
 

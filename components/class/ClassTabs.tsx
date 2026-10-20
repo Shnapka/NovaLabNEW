@@ -11,6 +11,7 @@ export default function ClassTabs({ classId, counts }: { classId: string; counts
     { href: `${base}/lessons`, label: "По уроку", icon: "layers", active: path.startsWith(`${base}/lessons`) },
     { href: `${base}/students`, label: `Ученики · ${counts.students}`, icon: "users", active: path.startsWith(`${base}/students`) },
     { href: `${base}/manage`, label: `Уроки класса · ${counts.lessons}`, icon: "book", active: path.startsWith(`${base}/manage`) },
+    { href: `${base}/plan`, label: "План четвертей", icon: "layers", active: path.startsWith(`${base}/plan`) },
     { href: `${base}/feedback`, label: `Отзывы учеников · ${counts.feedback}`, icon: "message", active: path.startsWith(`${base}/feedback`) },
     { href: `${base}/reviews`, label: "Оценить уроки", icon: "bell", active: path.startsWith(`${base}/reviews`), badge: counts.toReview },
   ];

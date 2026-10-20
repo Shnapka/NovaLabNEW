@@ -6,16 +6,40 @@ import { pct } from "@/lib/stats";
 import { plural } from "@/lib/plural";
 import Icon from "@/components/Icon";
 import JournalTable from "@/components/class/JournalTable";
+import TermFilter from "@/components/class/TermFilter";
+import { resolveTerm, visibleSectionKeys } from "@/lib/terms";
 
 const time = (d: Date) => d.toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
-// Вкладка «Журнал»: сводка по всем урокам класса
-export default async function ClassJournalPage({ params }: { params: Promise<{ id: string }> }) {
+// Вкладка «Журнал»: сводка по урокам текущей четверти и раздела (или выбранных в фильтре)
+export default async function ClassJournalPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ q?: string; s?: string }>;
+}) {
   const { id } = await params;
+  const { q, s } = await searchParams;
   const session = await teacherSession();
   const data = session?.user?.id ? await loadClassForTeacher(id, session.user.id) : null;
   if (!data) notFound();
-  const { classroom, lessons, journal, results } = data;
+  const { classroom, results } = data;
+
+  // Только уроки выбранной четверти / раздела; итоги учеников пересчитываются по ним
+  const term = resolveTerm(data.plan, new Date(), q, s);
+  const keys = visibleSectionKeys(term);
+  const lessons = keys ? data.lessons.filter((l) => keys.has(l.group.key)) : data.lessons;
+  const groupCount = new Set(lessons.map((l) => l.group.key)).size;
+  const journal = data.journal.map((r) => {
+    const cells = lessons.map((l) => r.cells[l.lesson.id]);
+    const started = cells.filter((c) => c.average !== null);
+    return {
+      ...r,
+      overall: started.length ? started.reduce((a, c) => a + c.average!, 0) / started.length : null,
+      lessonsDone: cells.filter((c) => c.completion === 1).length,
+    };
+  });
 
   const active = journal.filter((r) => r.overall !== null);
   const classAvg = active.length ? active.reduce((a, r) => a + r.overall!, 0) / active.length : null;
@@ -27,11 +51,13 @@ export default async function ClassJournalPage({ params }: { params: Promise<{ i
 
   return (
     <div className="space-y-6">
+      <TermFilter classId={classroom.id} base={`/classes/${classroom.id}`} term={term} />
+
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
           ["Средний балл класса", pct(classAvg), "по всем начатым урокам", "chart"],
           ["Работают", `${active.length} из ${journal.length}`, "учеников с результатами", "users"],
-          ["Уроков в классе", `${lessons.length}`, plural(data.groups.length, ["раздел", "раздела", "разделов"]), "layers"],
+          [term.quarter === "all" ? "Уроков за год" : "Уроков в выборке", `${lessons.length}`, plural(groupCount, ["раздел", "раздела", "разделов"]), "layers"],
           ["Своих задач решено", `${journal.reduce((a, r) => a + r.practiceSolved, 0)}`, `всего попыток: ${results.length}`, "practice"],
         ].map(([label, value, hint, icon]) => (
           <div key={label} className="card p-5">

@@ -71,7 +71,7 @@ export default async function LibraryPage() {
                 className="card group overflow-hidden transition hover:-translate-y-1 hover:shadow-lg"
               >
                 <div className="relative h-28 bg-gradient-to-br from-ocean-800 via-ocean-700 to-lagoon-500 p-5 text-white">
-                  <span className="pill bg-white/15 text-aqua-100">{t.section.grade.number} класс · {t.paragraph}</span>
+                  <span className="pill bg-white/15 text-aqua-100">{t.section.grade.number} класс · {t.paragraph ?? t.section.title}</span>
                   <span className="absolute bottom-4 right-4 flex h-11 w-11 items-center justify-center rounded-xl bg-sun-400 text-ocean-950 shadow-lg transition group-hover:scale-110">
                     <Icon name="play" />
                   </span>

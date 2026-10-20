@@ -8,6 +8,8 @@ import { practiceLabel, pct, scoreClass } from "@/lib/stats";
 import Rich from "@/components/modules/Rich";
 import Icon from "@/components/Icon";
 import AttemptLine from "@/components/class/AttemptLine";
+import TermFilter from "@/components/class/TermFilter";
+import { resolveTerm, visibleSectionKeys } from "@/lib/terms";
 
 const time = (d: Date) => d.toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
@@ -17,16 +19,17 @@ export default async function ClassLessonPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ lesson?: string }>;
+  searchParams: Promise<{ lesson?: string; q?: string; s?: string }>;
 }) {
   const { id } = await params;
-  const { lesson: lessonParam } = await searchParams;
+  const { lesson: lessonParam, q, s } = await searchParams;
   const session = await teacherSession();
   const data = session?.user?.id ? await loadClassForTeacher(id, session.user.id) : null;
   if (!data) notFound();
-  const { classroom, lessons } = data;
+  const { classroom } = data;
+  const allLessons = data.lessons;
 
-  if (lessons.length === 0) {
+  if (allLessons.length === 0) {
     return (
       <div className="card p-8 text-center text-slate-500">
         В классе пока нет уроков. <Link href={`/classes/${id}/manage`} className="font-semibold text-ocean-700">Добавить урок</Link>
@@ -34,51 +37,109 @@ export default async function ClassLessonPage({
     );
   }
 
-  // По умолчанию — последний добавленный урок
-  const selected = lessons.find((l) => l.lesson.id === lessonParam) ?? lessons[lessons.length - 1];
-  const { lesson, graded, stats } = selected;
-  const current = lessons.indexOf(selected);
-  const titleOf = Object.fromEntries(graded.map((m) => [m.moduleId, shortTitle(m.title)]));
-  const prev = lessons[current - 1];
-  const next = lessons[current + 1];
+  // Уроки выбранной четверти / раздела (по умолчанию — текущих)
+  const term = resolveTerm(data.plan, new Date(), q, s);
+  const keys = visibleSectionKeys(term);
+  const lessons = keys ? allLessons.filter((l) => keys.has(l.group.key)) : allLessons;
+  const termQuery = [q ? `q=${q}` : "", s ? `s=${s}` : ""].filter(Boolean).join("&");
+  const href = (lessonId: string) => `/classes/${id}/lessons?${termQuery ? termQuery + "&" : ""}lesson=${lessonId}`;
+
+  // Навигация: четверть → раздел → уроки
+  const quarterOfKey = (key: string) => data.plan.find((r) => `s${r.sectionId}` === key)?.quarter ?? null;
+  const navGroups = [...new Map(lessons.map((l) => [l.group.key, l.group])).values()]
+    .map((g) => ({ ...g, quarter: quarterOfKey(g.key), items: lessons.filter((l) => l.group.key === g.key) }))
+    .sort((a, b) => (a.quarter ?? 9) - (b.quarter ?? 9) || a.order - b.order);
+
+  // Выбранный урок: из адреса, иначе последний добавленный в выборке
+  const selected =
+    allLessons.find((l) => l.lesson.id === lessonParam) ??
+    [...lessons].sort((a, b) => b.added - a.added)[0] ??
+    null;
+  const ordered = navGroups.flatMap((g) => g.items);
+  const current = selected ? ordered.indexOf(selected) : -1;
+  const prev = current > 0 ? ordered[current - 1] : null;
+  const next = current >= 0 ? ordered[current + 1] : null;
 
   return (
-    <div className="space-y-6">
-      {/* Выбор урока */}
-      <div className="flex flex-wrap items-center gap-2">
-        {prev && (
-          <Link href={`/classes/${id}/lessons?lesson=${prev.lesson.id}`} className="btn-ghost px-2.5 py-1.5" title="Предыдущий урок">
+    <div className="space-y-5">
+      <TermFilter classId={classroom.id} base={`/classes/${id}/lessons`} term={term} />
+
+      <div className="grid gap-6 lg:grid-cols-[290px_1fr]">
+        {/* Навигация по урокам */}
+        <nav className="card self-start p-3 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+          {navGroups.length === 0 ? (
+            <p className="p-3 text-sm text-slate-500">В этой выборке нет уроков.</p>
+          ) : (
+            navGroups.map((g, gi) => (
+              <div key={g.key} className="mb-3 last:mb-0">
+                {term.quarter === "all" && (gi === 0 || navGroups[gi - 1].quarter !== g.quarter) && (
+                  <div className="mb-1 mt-2 px-2 text-[11px] font-extrabold uppercase tracking-wider text-slate-400 first:mt-0">
+                    {g.quarter ? `${g.quarter} четверть` : "Вне плана четвертей"}
+                  </div>
+                )}
+                <div className="flex items-center gap-1.5 px-2 py-1 text-xs font-bold uppercase tracking-wide text-lagoon-700">
+                  <Icon name="book" className="h-3.5 w-3.5" /> {g.label}
+                </div>
+                <ul className="space-y-0.5">
+                  {g.items.map((l) => {
+                    const on = selected?.lesson.id === l.lesson.id;
+                    return (
+                      <li key={l.lesson.id}>
+                        <Link
+                          href={href(l.lesson.id)}
+                          className={`flex items-center gap-2 rounded-xl px-2.5 py-2 text-sm transition ${on ? "bg-ocean-700 text-white" : "text-ocean-900 hover:bg-mist-50"}`}
+                        >
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate font-semibold">{l.lesson.title}</span>
+                            <span className="mt-1 block h-1 w-full overflow-hidden rounded-full bg-mist-100/60">
+                              <span
+                                className={`block h-full rounded-full ${on ? "bg-sun-400" : "bg-lagoon-500"}`}
+                                style={{ width: `${(l.stats.kpi.students ? l.stats.kpi.finished / l.stats.kpi.students : 0) * 100}%` }}
+                              />
+                            </span>
+                          </span>
+                          <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-xs font-bold ${on ? "bg-white/20" : scoreClass(l.stats.kpi.average)}`}>
+                            {pct(l.stats.kpi.average)}
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))
+          )}
+        </nav>
+
+        {!selected ? (
+          <div className="card p-8 text-center text-slate-500">Выберите урок слева.</div>
+        ) : (
+        renderDetail()
+        )}
+      </div>
+    </div>
+  );
+
+  function renderDetail() {
+  const { lesson, graded, stats } = selected!;
+  const titleOf = Object.fromEntries(graded.map((m) => [m.moduleId, shortTitle(m.title)]));
+  return (
+    <div className="min-w-0 space-y-6">
+      <div className="flex items-center gap-2">
+        {prev ? (
+          <Link href={href(prev.lesson.id)} className="btn-ghost px-2.5 py-1.5" title="Предыдущий урок">
             <Icon name="arrowLeft" className="h-4 w-4" />
           </Link>
-        )}
-        <div className="flex-1 space-y-2">
-          {data.groups.map((g) => (
-            <div key={g.key} className="flex flex-wrap items-center gap-2">
-              <span className="w-full text-xs font-bold uppercase tracking-wide text-lagoon-700 sm:w-48">{g.label}</span>
-              {lessons
-                .filter((l) => l.group.key === g.key)
-                .map((l) => (
-                  <Link
-                    key={l.lesson.id}
-                    href={`/classes/${id}/lessons?lesson=${l.lesson.id}`}
-                    className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
-                      l.lesson.id === lesson.id ? "bg-ocean-700 text-white" : "bg-white text-ocean-800 ring-1 ring-mist-200 hover:ring-lagoon-500"
-                    }`}
-                  >
-                    <span className="opacity-60">{lessons.indexOf(l) + 1}.</span> {l.lesson.title}
-                    <span className={`ml-2 rounded px-1.5 text-xs ${l.lesson.id === lesson.id ? "bg-white/20" : scoreClass(l.stats.kpi.average)}`}>
-                      {pct(l.stats.kpi.average)}
-                    </span>
-                  </Link>
-                ))}
-            </div>
-          ))}
+        ) : <span className="w-9" />}
+        <div className="min-w-0 flex-1 text-center">
+          <div className="text-xs font-semibold text-lagoon-700">{selected!.group.label}</div>
+          <h2 className="truncate text-xl font-extrabold text-ocean-900">{lesson.title}</h2>
         </div>
-        {next && (
-          <Link href={`/classes/${id}/lessons?lesson=${next.lesson.id}`} className="btn-ghost px-2.5 py-1.5" title="Следующий урок">
+        {next ? (
+          <Link href={href(next.lesson.id)} className="btn-ghost px-2.5 py-1.5" title="Следующий урок">
             <Icon name="arrowRight" className="h-4 w-4" />
           </Link>
-        )}
+        ) : <span className="w-9" />}
       </div>
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -171,7 +232,7 @@ export default async function ClassLessonPage({
         )}
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+      <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
         <section className="space-y-3">
           <h2 className="text-lg font-bold text-ocean-900">Работы учеников</h2>
           {stats.rows.filter((r) => r.attempts.length).length === 0 && (
@@ -221,4 +282,5 @@ export default async function ClassLessonPage({
       </div>
     </div>
   );
+  }
 }

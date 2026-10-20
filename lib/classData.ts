@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { GRADED_TYPES, computeLessonStats, type GradedModule } from "@/lib/stats";
 import { applyOverride } from "@/lib/modules/overrides";
 import { kindsOf } from "@/lib/practice/kinds";
+import type { PlanRow } from "@/lib/terms";
 
 type BlockWithModule = { moduleId: string; config?: unknown; module: { type: string; title: string; content: unknown } };
 
@@ -63,6 +64,7 @@ export async function loadClassForTeacher(id: string, ownerId: string) {
           },
         },
       },
+      terms: { include: { section: { include: { grade: true } } }, orderBy: [{ quarter: "asc" }, { startDate: "asc" }] },
     },
   });
   if (!classroom) return null;
@@ -106,5 +108,14 @@ export async function loadClassForTeacher(id: string, ownerId: string) {
     };
   });
 
-  return { classroom, results, lessons, groups, journal };
+  // План четвертей: раздел → четверть и даты
+  const plan: PlanRow[] = classroom.terms.map((t) => ({
+    quarter: t.quarter,
+    sectionId: t.sectionId,
+    label: `${t.section.grade.number} кл. · ${t.section.title}`,
+    start: t.startDate,
+    end: t.endDate,
+  }));
+
+  return { classroom, results, lessons, groups, journal, plan };
 }

@@ -51,6 +51,7 @@ model Section {
   gradeId Int
   grade   Grade   @relation(fields: [gradeId], references: [id])
   topics  Topic[]
+  terms   ClassTerm[]
 
   @@unique([gradeId, title])
 }
@@ -119,6 +120,7 @@ model Classroom {
   lessons   Lesson[]
   feedback  LessonFeedback[]
   reviews   TeacherReview[]
+  terms     ClassTerm[]
   createdAt DateTime  @default(now())
 }
 
@@ -200,4 +202,20 @@ model TeacherReview {
   updatedAt     DateTime   @updatedAt
 
   @@unique([lessonId, classroomId])
+}
+
+// План класса: какой раздел учебника проходят в какую четверть и в какие даты
+// (обычно полчетверти — один раздел, полчетверти — другой). По нему журнал открывается на текущем разделе.
+model ClassTerm {
+  id          String    @id @default(cuid())
+  classroomId String
+  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  quarter     Int // 1..4
+  sectionId   Int
+  section     Section   @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  startDate   DateTime
+  endDate     DateTime
+
+  @@unique([classroomId, quarter, sectionId])
+  @@index([classroomId])
 }

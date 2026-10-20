@@ -1,7 +1,11 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export type ModuleEvent = { type: string; data?: unknown };
+
+const SCALE_KEY = "nl-sim-scale";
+const SCALE_MIN = 0.7;
+const SCALE_MAX = 1.5;
 
 export default function ModuleFrame({
   src,
@@ -27,8 +31,29 @@ export default function ModuleFrame({
   const [overlay, setOverlay] = useState(false); // запасной: на всё окно, если браузер запретил (iOS, встроенные окна)
   const fullscreen = native || overlay;
 
-  const sendInit = () =>
+  // Масштаб интерфейса симуляции (приближение / отдаление) — общий для всех симуляций, запоминается в браузере
+  const [scale, setScale] = useState(1);
+  const scaleRef = useRef(1);
+  const sendScale = useCallback(
+    (v: number) => ref.current?.contentWindow?.postMessage({ source: "physlab-host", type: "uiScale", value: v }, "*"),
+    [],
+  );
+
+  // Только через ref — функция стабильна между рендерами
+  const sendInit = useCallback(() => {
     ref.current?.contentWindow?.postMessage({ source: "physlab-host", type: "init", config: configRef.current }, "*");
+    sendScale(scaleRef.current);
+  }, [sendScale]);
+
+  function changeScale(delta: number) {
+    const v = Math.min(SCALE_MAX, Math.max(SCALE_MIN, Math.round((scaleRef.current + delta) * 10) / 10));
+    scaleRef.current = v;
+    setScale(v);
+    sendScale(v);
+    try {
+      localStorage.setItem(SCALE_KEY, String(v));
+    } catch {}
+  }
 
   useEffect(() => {
     function onMessage(e: MessageEvent) {
@@ -45,6 +70,13 @@ export default function ModuleFrame({
       }
     }
     window.addEventListener("message", onMessage);
+    try {
+      const saved = Number(localStorage.getItem(SCALE_KEY));
+      if (saved >= SCALE_MIN && saved <= SCALE_MAX) {
+        scaleRef.current = saved;
+        setScale(saved);
+      }
+    } catch {}
     // Лёгкий модуль может прислать "ready" ещё до гидрации React, и мы его пропустим.
     // Поэтому шлём init сразу. Если модуль ещё не готов, он это сообщение не услышит
     // и позже пришлёт "ready" сам.
@@ -59,7 +91,7 @@ export default function ModuleFrame({
       document.removeEventListener("fullscreenchange", onFs);
       window.removeEventListener("keydown", onKey);
     };
-  }, []);
+  }, [sendInit]);
 
   // В режиме «на всё окно» страница под симуляцией не прокручивается
   useEffect(() => {
@@ -88,10 +120,23 @@ export default function ModuleFrame({
       }
     >
       <div className={`flex items-center gap-3 ${fullscreen ? "px-4 py-2 text-white" : ""}`}>
-        {label && <span className={`text-sm font-semibold ${fullscreen ? "text-aqua-200" : "text-slate-500"}`}>{label}</span>}
+        {label && <span className={`flex-1 text-sm font-semibold ${fullscreen ? "text-aqua-200" : "text-slate-500"}`}>{label}</span>}
+        <div
+          className={`flex items-center overflow-hidden rounded-lg text-sm font-semibold ${fullscreen ? "bg-white/10 text-white" : "bg-white text-ocean-800 ring-1 ring-mist-200"}`}
+          title="Приближение и отдаление: размер кнопок и надписей в симуляции"
+        >
+          <button onClick={() => changeScale(-0.1)} disabled={scale <= SCALE_MIN} className="px-3 py-1.5 transition hover:bg-black/10 disabled:opacity-40" aria-label="Отдалить">
+            −
+          </button>
+          <span className="min-w-14 text-center tabular-nums">{Math.round(scale * 100)} %</span>
+          <button onClick={() => changeScale(0.1)} disabled={scale >= SCALE_MAX} className="px-3 py-1.5 transition hover:bg-black/10 disabled:opacity-40" aria-label="Приблизить">
+            +
+          </button>
+        </div>
+        <div className="flex flex-1 justify-end">
         <button
           onClick={toggleFullscreen}
-          className={`ml-auto inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
+          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
             fullscreen ? "bg-white/10 text-white hover:bg-white/20" : "bg-ocean-700 text-white hover:bg-ocean-800"
           }`}
           title={fullscreen ? "Выйти из полноэкранного режима (Esc)" : "Открыть симуляцию на весь экран"}
@@ -101,6 +146,7 @@ export default function ModuleFrame({
           </svg>
           {fullscreen ? "Свернуть" : "На весь экран"}
         </button>
+        </div>
       </div>
       <iframe
         ref={ref}
