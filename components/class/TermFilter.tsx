@@ -2,16 +2,18 @@ import Link from "next/link";
 import Icon from "@/components/Icon";
 import { fmtDate, type TermView } from "@/lib/terms";
 
-// Фильтр «четверть → раздел»: по умолчанию выбраны текущая четверть и раздел, который класс проходит сейчас
-export default function TermFilter({ classId, base, term }: { classId: string; base: string; term: TermView }) {
+// Фильтр «четверть → раздел»: по умолчанию выбраны текущая четверть и раздел, который класс проходит сейчас.
+// planHref — ссылка на редактирование плана (только у учителя); без неё и без плана фильтр не показывается.
+export default function TermFilter({ base, term, planHref }: { base: string; term: TermView; planHref?: string }) {
   if (!term.hasPlan) {
+    if (!planHref) return null;
     return (
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-dashed border-mist-200 bg-white px-4 py-3 text-sm text-slate-600">
         <Icon name="layers" className="h-5 w-5 text-lagoon-600" />
         <span className="mr-auto">
           План четвертей не настроен — показаны все уроки. Укажите, какой раздел класс проходит в каждую четверть, и журнал будет открываться на текущем.
         </span>
-        <Link href={`/classes/${classId}/plan`} className="btn-primary py-1.5 text-sm">Настроить план</Link>
+        <Link href={planHref} className="btn-primary py-1.5 text-sm">Настроить план</Link>
       </div>
     );
   }
@@ -32,14 +34,17 @@ export default function TermFilter({ classId, base, term }: { classId: string; b
           </Link>
         ))}
         <Link href={`${base}?q=all`} className={tab(q === "all")}>Весь год</Link>
-        <Link href={`/classes/${classId}/plan`} className="ml-auto flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-ocean-700">
-          <Icon name="edit" className="h-3.5 w-3.5" /> План четвертей
-        </Link>
+        {planHref && (
+          <Link href={planHref} className="ml-auto flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-ocean-700">
+            <Icon name="edit" className="h-3.5 w-3.5" /> План четвертей
+          </Link>
+        )}
       </div>
       {q !== "all" &&
         (sections.length === 0 ? (
           <p className="text-sm text-slate-500">
-            На {q} четверть разделы не запланированы. <Link href={`/classes/${classId}/plan`} className="font-semibold text-ocean-700">Добавить в план</Link>
+            На {q} четверть разделы не запланированы.
+            {planHref && <> <Link href={planHref} className="font-semibold text-ocean-700">Добавить в план</Link></>}
           </p>
         ) : (
           <div className="flex flex-wrap items-center gap-2 border-t border-mist-100 pt-3">

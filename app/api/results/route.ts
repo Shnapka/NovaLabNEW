@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { getStudentContext, resolveStudentForLesson } from "@/lib/student";
 import { checkPractice } from "@/lib/practice";
+import { DEADLINE_MESSAGE, isOverdue } from "@/lib/deadlines";
 import { SOLUTION_MAX } from "@/lib/practice/common";
 
 const schema = z.object({
@@ -36,6 +37,12 @@ export async function POST(req: Request) {
   });
   const mod = lesson?.blocks[0]?.module;
   if (!lesson || !mod) return NextResponse.json({ error: "Урок не назначен вашему классу" }, { status: 403 });
+
+  // Срок сдачи, который поставил учитель, прошёл — результаты больше не принимаем
+  const deadline = await prisma.lessonDeadline.findUnique({
+    where: { classroomId_lessonId: { classroomId: student.classroomId, lessonId } },
+  });
+  if (deadline && isOverdue(deadline.dueAt)) return NextResponse.json({ error: DEADLINE_MESSAGE, overdue: true }, { status: 403 });
 
   const d = (event.data ?? {}) as Record<string, unknown>;
   let kind: string;

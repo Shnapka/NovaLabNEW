@@ -20,6 +20,7 @@ export default function LessonPlayer({
   onModuleEvent,
   renderBelow,
   finale,
+  backLabel = "Закрыть показ",
 }: {
   title: string;
   blocks: B[];
@@ -29,6 +30,7 @@ export default function LessonPlayer({
   onModuleEvent?: (block: B, e: ModuleEvent) => void;
   renderBelow?: (block: B) => React.ReactNode; // доп. блок под модулем (например, работа ученика)
   finale?: { label: string; done?: boolean; content: React.ReactNode }; // завершающий шаг после модулей (оценка урока)
+  backLabel?: string;
 }) {
   const [i, setI] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -75,7 +77,7 @@ export default function LessonPlayer({
           </button>
           {backHref && (
             <Link href={backHref} className="btn text-aqua-200 hover:bg-white/10 hover:text-white">
-              <Icon name="arrowLeft" className="h-4 w-4" /> Закрыть показ
+              <Icon name="arrowLeft" className="h-4 w-4" /> {backLabel}
             </Link>
           )}
         </div>

@@ -6,7 +6,10 @@ import { computeLessonStats, practiceLabel, pct, scoreClass } from "@/lib/stats"
 import { metaOf } from "@/lib/modules/meta";
 import Rich from "@/components/modules/Rich";
 import Icon from "@/components/Icon";
-import { gradedOf } from "@/lib/classData";
+import { gradedOf, lessonGroup } from "@/lib/classData";
+import { filterStudentLessons } from "@/lib/studentFilter";
+import TermFilter from "@/components/class/TermFilter";
+import SectionChips from "@/components/class/SectionChips";
 
 export const metadata = { title: "NovaLab — моя статистика" };
 
@@ -17,7 +20,8 @@ const shortTitle = (t: string) => {
 const num = (n: unknown) => (typeof n === "number" ? n.toLocaleString("ru-RU", { maximumSignificantDigits: 6 }) : "—");
 const time = (d: Date) => d.toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
-export default async function StudentProgressPage() {
+export default async function StudentProgressPage({ searchParams }: { searchParams: Promise<{ q?: string; s?: string }> }) {
+  const { q, s } = await searchParams;
   const ctx = await getStudentContext();
   if (!ctx.mode) redirect("/student");
 
@@ -26,26 +30,42 @@ export default async function StudentProgressPage() {
     orderBy: { createdAt: "asc" },
     include: {
       classroom: {
-        include: { lessons: { orderBy: { updatedAt: "desc" }, include: { blocks: { orderBy: { position: "asc" }, include: { module: true } } } } },
+        include: {
+          lessons: {
+            orderBy: { updatedAt: "desc" },
+            include: { blocks: { orderBy: { position: "asc" }, include: { module: { include: { topic: { include: { section: { include: { grade: true } } } } } } } } },
+          },
+          terms: { include: { section: { include: { grade: true } } } },
+        },
       },
       results: { orderBy: { createdAt: "desc" } },
     },
   });
 
+  // Фильтр четвертей / разделов — по плану всех классов ученика
+  const plan = memberships.flatMap((m) =>
+    m.classroom.terms.map((t) => ({ quarter: t.quarter, sectionId: t.sectionId, label: `${t.section.grade.number} кл. · ${t.section.title}`, start: t.startDate, end: t.endDate })),
+  );
+  const allLessons = memberships.flatMap((m) => m.classroom.lessons.map((l) => ({ ...l, group: lessonGroup(l.blocks) })));
+  const filter = filterStudentLessons(plan, allLessons, q, s);
+  const visibleIds = new Set(filter.visible.map((l) => l.id));
+
   // Классная работа: по каждому классу — его уроки, по каждому уроку — тот же расчёт, что видит учитель
   const classes = memberships.map((m) => ({
     id: m.id,
     name: m.classroom.name,
-    lessons: m.classroom.lessons.map((l) => {
-      const graded = gradedOf(l.blocks);
-      const results = m.results.filter((r) => r.lessonId === l.id);
-      const row = computeLessonStats(graded, [{ id: m.id, name: m.name }], results).rows[0];
-      return { lesson: l, graded, row, practice: results.filter((r) => r.kind === "practice") };
-    }),
+    lessons: m.classroom.lessons
+      .filter((l) => visibleIds.has(l.id))
+      .map((l) => {
+        const graded = gradedOf(l.blocks);
+        const results = m.results.filter((r) => r.lessonId === l.id);
+        const row = computeLessonStats(graded, [{ id: m.id, name: m.name }], results).rows[0];
+        return { lesson: l, graded, row, practice: results.filter((r) => r.kind === "practice") };
+      }),
   }));
 
   const cards = classes.flatMap((c) => c.lessons);
-  const allResults = memberships.flatMap((m) => m.results);
+  const allResults = memberships.flatMap((m) => m.results).filter((r) => visibleIds.has(r.lessonId));
   const started = cards.filter((c) => c.row.average !== null);
   const kpi = {
     average: started.length ? started.reduce((a, c) => a + c.row.average!, 0) / started.length : null,
@@ -63,6 +83,13 @@ export default async function StudentProgressPage() {
         </div>
         <Link href="/student" className="btn-ghost"><Icon name="arrowLeft" className="h-4 w-4" /> К урокам</Link>
       </div>
+
+      {allLessons.length > 0 &&
+        (filter.term.hasPlan ? (
+          <TermFilter base="/student/progress" term={filter.term} />
+        ) : (
+          <SectionChips base="/student/progress" sections={filter.sections} active={filter.sectionKey} />
+        ))}
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
@@ -88,7 +115,7 @@ export default async function StudentProgressPage() {
           <h2 className="flex items-center gap-2 text-xl font-extrabold text-ocean-900">
             <Icon name="users" className="h-5 w-5 text-lagoon-600" /> Классная работа · {c.name}
           </h2>
-          {c.lessons.length === 0 && <div className="card p-6 text-slate-500">Учитель ещё не добавил уроков.</div>}
+          {c.lessons.length === 0 && <div className="card p-6 text-slate-500">В выбранной четверти или разделе уроков нет.</div>}
           <div className="grid gap-4 lg:grid-cols-2">
             {c.lessons.map(({ lesson, graded, row, practice }) => (
               <div key={lesson.id} id={`lesson-${lesson.id}`} className="card flex scroll-mt-20 flex-col p-5">

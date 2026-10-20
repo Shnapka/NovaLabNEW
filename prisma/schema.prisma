@@ -64,6 +64,7 @@ model Topic {
   sectionId Int
   section   Section  @relation(fields: [sectionId], references: [id])
   modules   Module[]
+  labNotes  LabNote[]
 
   @@unique([sectionId, title])
 }
@@ -95,6 +96,7 @@ model Lesson {
   results     Result[]
   feedback    LessonFeedback[]
   reviews     TeacherReview[]
+  deadlines   LessonDeadline[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 }
@@ -121,6 +123,7 @@ model Classroom {
   feedback  LessonFeedback[]
   reviews   TeacherReview[]
   terms     ClassTerm[]
+  deadlines LessonDeadline[]
   createdAt DateTime  @default(now())
 }
 
@@ -218,4 +221,27 @@ model ClassTerm {
 
   @@unique([classroomId, quarter, sectionId])
   @@index([classroomId])
+}
+
+// Срок сдачи урока в классе: после него результаты ученика по уроку не принимаются
+model LessonDeadline {
+  classroomId String
+  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  lessonId    String
+  lesson      Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  dueAt       DateTime
+
+  @@id([classroomId, lessonId])
+}
+
+// «Моя лаборатория»: одна заметка ученика по теме учебника. owner — "u:<id аккаунта>" или "s:<id ученика без аккаунта>"
+model LabNote {
+  id        String   @id @default(cuid())
+  owner     String
+  topicId   Int
+  topic     Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  text      String
+  updatedAt DateTime @updatedAt
+
+  @@unique([owner, topicId])
 }

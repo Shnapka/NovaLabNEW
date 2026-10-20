@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { DEADLINE_MESSAGE, fmtDue, timeLeft } from "@/lib/deadlines";
 import LessonPlayer, { type PlayerBlock } from "./LessonPlayer";
 import type { ModuleEvent } from "./ModuleFrame";
 import PracticeLog, { type PracticeAttempt } from "./PracticeLog";
@@ -17,6 +18,7 @@ export default function StudentLesson({
   initialDone,
   initialPractice,
   initialFeedback,
+  dueAt,
 }: {
   lessonId: string;
   title: string;
@@ -25,7 +27,14 @@ export default function StudentLesson({
   initialDone: string[];
   initialPractice: Record<string, PracticeAttempt[]>; // moduleId → задачи ученика, новые сверху
   initialFeedback: MyFeedback;
+  dueAt: string | null; // срок сдачи от учителя; после него результаты не принимаются
 }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(t);
+  }, []);
+  const overdue = !!dueAt && new Date(dueAt).getTime() < now;
   const [feedback, setFeedback] = useState(initialFeedback);
   const [done, setDone] = useState(initialDone);
   const [practice, setPractice] = useState(initialPractice);
@@ -34,6 +43,11 @@ export default function StudentLesson({
   async function report(block: PlayerBlock, e: ModuleEvent) {
     if (!GRADED_EVENTS.includes(e.type) || !block.moduleId) return;
     const moduleId = block.moduleId;
+    if (dueAt && new Date(dueAt).getTime() < Date.now()) {
+      setToast({ ok: false, text: DEADLINE_MESSAGE });
+      setTimeout(() => setToast(null), 3500);
+      return;
+    }
     try {
       const r = await fetch("/api/results", {
         method: "POST",
@@ -69,7 +83,16 @@ export default function StudentLesson({
     <>
       <LessonPlayer
         title={title}
-        subtitle={studentLabel}
+        subtitle={
+          <>
+            {studentLabel}
+            {dueAt && (
+              <span className={`ml-2 rounded-md px-2 py-0.5 text-xs font-bold ${overdue ? "bg-rose-500 text-white" : "bg-sun-400 text-ocean-950"}`}>
+                {overdue ? `Срок сдачи истёк ${fmtDue(dueAt)} — результаты не сохраняются` : `Сдать до ${fmtDue(dueAt)} · осталось ${timeLeft(dueAt, new Date(now))}`}
+              </span>
+            )}
+          </>
+        }
         blocks={blocks}
         backHref="/student"
         doneIds={done}

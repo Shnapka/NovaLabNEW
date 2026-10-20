@@ -8,7 +8,8 @@ import Icon from "./Icon";
 type T = { id: number; title: string; paragraph: string | null; types: string[] };
 type S = { id: number; title: string; topics: T[] };
 
-export default function GradeView({ sections }: { sections: S[] }) {
+// topicHref — куда ведёт тема (библиотека учителя или «Моя лаборатория» ученика); notes — темы с заметкой ученика
+export default function GradeView({ sections, topicHref = "/library/topic/", notes = [] }: { sections: S[]; topicHref?: string; notes?: number[] }) {
   const [query, setQuery] = useState("");
   const [onlyReady, setOnlyReady] = useState(false);
   const q = query.trim().toLowerCase();
@@ -70,13 +71,18 @@ export default function GradeView({ sections }: { sections: S[] }) {
                 return (
                   <li key={t.id}>
                     <Link
-                      href={`/library/topic/${t.id}`}
+                      href={`${topicHref}${t.id}`}
                       className={`group flex flex-wrap items-center gap-3 border-l-4 px-5 py-3 transition ${
                         ready ? "border-sun-400 hover:bg-sun-50" : "border-transparent hover:bg-mist-50"
                       }`}
                     >
                       <span className="w-16 shrink-0 font-mono text-xs text-mist-300">{t.paragraph}</span>
                       <span className={`flex-1 ${ready ? "font-semibold text-ocean-900" : "text-slate-500"}`}>{t.title}</span>
+                      {notes.includes(t.id) && (
+                        <span title="Есть моя заметка" className="pill bg-aqua-100 text-ocean-800">
+                          <Icon name="edit" className="h-3 w-3" /> заметка
+                        </span>
+                      )}
                       {ready ? (
                         <span className="flex items-center gap-1">
                           {t.types.map((ty) => (

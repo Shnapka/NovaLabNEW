@@ -62,7 +62,7 @@ export default async function ClassLessonPage({
 
   return (
     <div className="space-y-5">
-      <TermFilter classId={classroom.id} base={`/classes/${id}/lessons`} term={term} />
+      <TermFilter planHref={`/classes/${classroom.id}/plan`} base={`/classes/${id}/lessons`} term={term} />
 
       <div className="grid gap-6 lg:grid-cols-[290px_1fr]">
         {/* Навигация по урокам */}

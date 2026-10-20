@@ -14,7 +14,10 @@ export default async function ClassManagePage({ params }: { params: Promise<{ id
   const session = await teacherSession();
   if (!session?.user?.id) notFound();
 
-  const classroom = await prisma.classroom.findFirst({ where: { id, ownerId: session.user.id }, select: { id: true } });
+  const classroom = await prisma.classroom.findFirst({
+    where: { id, ownerId: session.user.id },
+    select: { id: true, deadlines: { select: { lessonId: true, dueAt: true } } },
+  });
   if (!classroom) notFound();
 
   const [myLessons, readyTopics] = await Promise.all([
@@ -34,7 +37,15 @@ export default async function ClassManagePage({ params }: { params: Promise<{ id
   const lessons = myLessons
     .map((l, i) => ({ l, g: lessonGroup(l.blocks), i }))
     .sort((a, b) => a.g.order - b.g.order || a.i - b.i)
-    .map(({ l, g }) => ({ id: l.id, title: l.title, blocks: l.blocks.length, group: g.label, topic: g.topic, assigned: l.classrooms.length > 0 }));
+    .map(({ l, g }) => ({
+      id: l.id,
+      title: l.title,
+      blocks: l.blocks.length,
+      group: g.label,
+      topic: g.topic,
+      assigned: l.classrooms.length > 0,
+      dueAt: classroom.deadlines.find((d) => d.lessonId === l.id)?.dueAt.toISOString() ?? null,
+    }));
 
   return (
     <ClassLessons

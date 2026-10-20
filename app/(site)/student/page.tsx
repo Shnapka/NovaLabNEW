@@ -8,11 +8,16 @@ import StudentJoinForm from "@/components/StudentJoinForm";
 import StudentLogout from "@/components/StudentLogout";
 import StudentAuthForm from "@/components/StudentAuthForm";
 import SessionNotice from "@/components/SessionNotice";
-import { gradedOf } from "@/lib/classData";
+import { gradedOf, lessonGroup } from "@/lib/classData";
+import { filterStudentLessons } from "@/lib/studentFilter";
+import { fmtDue, isOverdue, timeLeft } from "@/lib/deadlines";
+import TermFilter from "@/components/class/TermFilter";
+import SectionChips from "@/components/class/SectionChips";
 
 export const metadata = { title: "NovaLab — ученику" };
 
-export default async function StudentPage() {
+export default async function StudentPage({ searchParams }: { searchParams: Promise<{ q?: string; s?: string }> }) {
+  const { q, s } = await searchParams;
   const ctx = await getStudentContext();
 
   // Не вошёл: аккаунт или быстрый вход
@@ -52,10 +57,19 @@ export default async function StudentPage() {
     orderBy: { updatedAt: "desc" },
     include: {
       classrooms: { where: { id: { in: classIds } }, select: { id: true, name: true } },
-      blocks: { orderBy: { position: "asc" }, include: { module: { select: { type: true, title: true, content: true } } } },
+      blocks: {
+        orderBy: { position: "asc" },
+        include: { module: { select: { type: true, title: true, content: true, topic: { include: { section: { include: { grade: true } } } } } } },
+      },
     },
   });
-  const results = await prisma.result.findMany({ where: { studentId: { in: ctx.students.map((s) => s.id) } } });
+  const [results, terms, deadlines] = await Promise.all([
+    prisma.result.findMany({ where: { studentId: { in: ctx.students.map((st) => st.id) } } }),
+    prisma.classTerm.findMany({ where: { classroomId: { in: classIds } }, include: { section: { include: { grade: true } } } }),
+    prisma.lessonDeadline.findMany({ where: { classroomId: { in: classIds } } }),
+  ]);
+  const plan = terms.map((t) => ({ quarter: t.quarter, sectionId: t.sectionId, label: `${t.section.grade.number} кл. · ${t.section.title}`, start: t.startDate, end: t.endDate }));
+  const filter = filterStudentLessons(plan, lessons.map((l) => ({ ...l, group: lessonGroup(l.blocks) })), q, s);
   const firstName = ctx.name.split(" ").slice(-1)[0];
 
   return (
@@ -96,18 +110,38 @@ export default async function StudentPage() {
         </section>
       )}
 
+      {lessons.length > 0 &&
+        (filter.term.hasPlan ? (
+          <TermFilter base="/student" term={filter.term} />
+        ) : (
+          <SectionChips base="/student" sections={filter.sections} active={filter.sectionKey} />
+        ))}
+
+      {lessons.length > 0 && filter.visible.length === 0 && (
+        <div className="card p-8 text-center text-slate-500">
+          В этой четверти или разделе уроков пока нет. <Link href="/student?q=all" className="font-semibold text-ocean-700">Показать все уроки</Link>
+        </div>
+      )}
+
       {lessons.length === 0 ? (
         <div className="card p-10 text-center text-slate-500">
           {ctx.students.length ? "Учитель ещё не добавил уроков в твой класс. Загляни позже!" : "Вступи в класс по коду, который даст учитель, — и здесь появятся уроки."}
         </div>
       ) : (
+        filter.groups.map((g) => (
+        <section key={g.key} className="space-y-3">
+          <h2 className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-wide text-lagoon-700">
+            <Icon name="book" className="h-4 w-4" /> {g.label}
+          </h2>
         <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {lessons.map((l) => {
+          {g.items.map((l) => {
             // «Выполнено» считается так же, как в статистике: практика — когда решено нужное число задач
             const graded = gradedOf(l.blocks);
             const me = ctx.students.find((s) => l.classrooms.some((c) => c.id === s.classroomId))!;
             const row = computeLessonStats(graded, [{ id: me.id, name: me.name }], results.filter((r) => r.lessonId === l.id && r.studentId === me.id)).rows[0];
             const done = graded.filter((m) => row.cells[m.moduleId].done).length;
+            const due = deadlines.find((d) => d.lessonId === l.id && d.classroomId === me.classroomId)?.dueAt;
+            const overdue = isOverdue(due);
             return (
               <li key={l.id}>
                 <Link href={`/student/lesson/${l.id}`} className="card group block h-full p-5 transition hover:-translate-y-0.5 hover:border-lagoon-500 hover:shadow-lg">
@@ -120,6 +154,11 @@ export default async function StudentPage() {
                       <Icon name="play" className="h-5 w-5" />
                     </span>
                   </div>
+                  {due && (
+                    <div className={`mt-2 inline-flex rounded-lg px-2 py-0.5 text-xs font-bold ${overdue ? "bg-rose-50 text-rose-700" : "bg-sun-100 text-sun-900"}`}>
+                      {overdue ? `Срок истёк ${fmtDue(due)}` : `Сдать до ${fmtDue(due)} · осталось ${timeLeft(due)}`}
+                    </div>
+                  )}
                   <div className="mt-3 flex flex-wrap gap-1">
                     {l.blocks.map((b) => (
                       <span key={b.id} title={metaOf(b.module.type).label} className={`flex h-7 w-7 items-center justify-center rounded-lg ${metaOf(b.module.type).tile}`}>
@@ -147,6 +186,8 @@ export default async function StudentPage() {
             );
           })}
         </ul>
+        </section>
+        ))
       )}
     </main>
   );

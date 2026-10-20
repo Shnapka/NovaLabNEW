@@ -21,9 +21,10 @@ export default async function StudentLessonPage({ params }: { params: Promise<{ 
   });
   if (!lesson) notFound();
 
-  const [results, feedback] = await Promise.all([
+  const [results, feedback, deadline] = await Promise.all([
     prisma.result.findMany({ where: { studentId: student.id, lessonId: lesson.id }, orderBy: { createdAt: "desc" } }),
     prisma.lessonFeedback.findUnique({ where: { studentId_lessonId: { studentId: student.id, lessonId: lesson.id } } }),
+    prisma.lessonDeadline.findUnique({ where: { classroomId_lessonId: { classroomId: student.classroomId, lessonId: lesson.id } } }),
   ]);
 
   // Задачи практики ученика по модулям — показываются под практикой и передаются в симуляцию как прогресс
@@ -51,6 +52,7 @@ export default async function StudentLessonPage({ params }: { params: Promise<{ 
       studentLabel={`${student.name} · ${student.classroom.name}`}
       initialDone={[...new Set(results.map((r) => r.moduleId))]}
       initialPractice={practice}
+      dueAt={deadline?.dueAt.toISOString() ?? null}
       initialFeedback={feedback ? { rating: feedback.rating, liked: feedback.liked ?? "", disliked: feedback.disliked ?? "" } : null}
       blocks={lesson.blocks.map((b) => {
         return {

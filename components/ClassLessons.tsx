@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { plural } from "@/lib/plural";
 import Icon from "./Icon";
 import { useConfirm } from "./ConfirmDialog";
+import DeadlineField from "./class/DeadlineField";
 
-type L = { id: string; title: string; blocks: number; group: string; topic: string | null };
+type L = { id: string; title: string; blocks: number; group: string; topic: string | null; dueAt?: string | null };
 type T = { id: number; title: string; grade: number; paragraph: string | null; section: string };
 
 // Группировка с сохранением порядка: [[раздел, элементы], ...]
@@ -68,7 +69,7 @@ export default function ClassLessons({ classId, assigned, myOther, topics }: { c
       <section className="card p-5">
         <h2 className="text-lg font-bold text-ocean-900">Уроки класса</h2>
         <p className="mb-4 text-sm text-slate-500">
-          Ученики видят все эти уроки. Нажмите на урок, чтобы открыть его разбор; общая картина — во вкладке «Журнал».
+          Ученики видят все эти уроки. «+ срок» — дата и время, после которых урок уже нельзя выполнить: результаты не принимаются.
         </p>
         {assigned.length === 0 ? (
           <p className="rounded-xl border-2 border-dashed border-mist-200 p-6 text-center text-slate-500">Добавьте первый урок справа</p>
@@ -82,7 +83,7 @@ export default function ClassLessons({ classId, assigned, myOther, topics }: { c
                 </div>
                 <ul className="divide-y divide-mist-100 rounded-xl border border-mist-100">
                   {ls.map((l) => (
-                    <li key={l.id} className="flex items-center gap-3 px-4 py-2.5">
+                    <li key={l.id} className="flex flex-wrap items-center gap-3 px-4 py-2.5">
                       <Link href={`/classes/${classId}/lessons?lesson=${l.id}`} className="min-w-0 flex-1 hover:text-lagoon-700">
                         <div className="truncate font-semibold text-ocean-900">{l.title}</div>
                         <div className="text-xs text-slate-500">
@@ -90,6 +91,7 @@ export default function ClassLessons({ classId, assigned, myOther, topics }: { c
                           {plural(l.blocks, ["модуль", "модуля", "модулей"])}
                         </div>
                       </Link>
+                      <DeadlineField classId={classId} lessonId={l.id} dueAt={l.dueAt ?? null} />
                       <Link href={`/lessons/${l.id}/edit`} className="text-xs font-semibold text-slate-500 hover:text-ocean-700">Изменить</Link>
                       <button
                         onClick={() => remove(l)}

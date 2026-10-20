@@ -10,6 +10,7 @@ const TEACHER = [
 const STUDENT = [
   { href: "/student", label: "Мои уроки", match: ["/student/lesson"], exact: "/student" },
   { href: "/student/progress", label: "Моя статистика", match: ["/student/progress"] },
+  { href: "/student/lab", label: "Моя лаборатория", match: ["/student/lab"] },
 ];
 
 export default function NavLinks({ role }: { role: "TEACHER" | "ADMIN" | "STUDENT" }) {

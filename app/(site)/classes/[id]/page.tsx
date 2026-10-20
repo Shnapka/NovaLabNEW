@@ -51,7 +51,7 @@ export default async function ClassJournalPage({
 
   return (
     <div className="space-y-6">
-      <TermFilter classId={classroom.id} base={`/classes/${classroom.id}`} term={term} />
+      <TermFilter planHref={`/classes/${classroom.id}/plan`} base={`/classes/${classroom.id}`} term={term} />
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[

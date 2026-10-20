@@ -43,6 +43,13 @@ export async function resolveStudentForLesson(lessonId: string) {
   });
 }
 
+/** Владелец заметок в «Моей лаборатории»: аккаунт ученика или ученик быстрого входа */
+export function labOwner(ctx: Awaited<ReturnType<typeof getStudentContext>>) {
+  if (ctx.mode === "account" && ctx.userId) return `u:${ctx.userId}`;
+  if (ctx.mode === "guest" && ctx.students[0]) return `s:${ctx.students[0].id}`;
+  return null;
+}
+
 export const newStudentToken = () => randomBytes(24).toString("base64url");
 export const newPin = () => String(randomInt(0, 10000)).padStart(4, "0");
 
