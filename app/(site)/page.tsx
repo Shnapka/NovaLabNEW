@@ -9,9 +9,17 @@ function HeroLogo() {
   return (
     <svg viewBox="0 0 512 512" className="nova-float h-full w-full overflow-visible" aria-label="NovaLab">
       <defs>
-        <radialGradient id="hero-glow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#F2BA00" stopOpacity="0.55" />
-          <stop offset="100%" stopColor="#F2BA00" stopOpacity="0" />
+        {/* свечение кольцом: в центре пусто, чтобы сквозь N был виден синий фон */}
+        <radialGradient id="hero-glow" cx="256" cy="256" r="330" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#F2BA00" stopOpacity="0" />
+          <stop offset="0.5" stopColor="#F2BA00" stopOpacity="0" />
+          <stop offset="0.68" stopColor="#F2BA00" stopOpacity="0.42" />
+          <stop offset="0.82" stopColor="#F2BA00" stopOpacity="0.16" />
+          <stop offset="1" stopColor="#F2BA00" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="hero-orbit-light">
+          <stop offset="0" stopColor="#FFE38A" stopOpacity="0.95" />
+          <stop offset="1" stopColor="#F2BA00" stopOpacity="0" />
         </radialGradient>
         {/* маска: звезда видна везде, кроме буквы N — там «дырка» */}
         <mask id="hero-cut" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
@@ -27,7 +35,13 @@ function HeroLogo() {
           <stop offset="1" stopColor="#fff" stopOpacity="0" />
         </linearGradient>
       </defs>
-      <circle className="nova-glow" cx="256" cy="256" r="230" fill="url(#hero-glow)" />
+      <circle className="nova-glow" cx="256" cy="256" r="330" fill="url(#hero-glow)" />
+      <circle cx="256" cy="256" r="232" fill="none" stroke="#99D8DE" strokeOpacity="0.18" strokeWidth="2" />
+      {/* огонёк, который медленно обходит знак по орбите */}
+      <g className="nova-orbit">
+        <circle cx="256" cy="24" r="46" fill="url(#hero-orbit-light)" />
+        <circle cx="256" cy="24" r="5" fill="#FFF6CC" />
+      </g>
       <g mask="url(#hero-cut)">
         <path d="M256 40Q286.24 225.76 472 256Q286.24 286.24 256 472Q225.76 286.24 40 256Q225.76 225.76 256 40Z" fill="#F2BA00" />
         <path d="M256 40Q286.24 225.76 472 256Q286.24 286.24 256 472Z" fill="#DBA800" />
@@ -144,7 +158,7 @@ export default async function Home() {
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           {[
             ["Выберите класс и тему", "Библиотека повторяет оглавление учебника: класс → раздел → тема с номером параграфа."],
-            ["Откройте модули", "В центре — WebGL-симуляция. Рядом конспект, графики, квиз и карточки на закрепление."],
+            ["Откройте модули", "Интерактивная симуляция, конспект, графики, практика, квиз и карточки на закрепление."],
             ["Назначьте классу", "Ученики входят по коду класса, решают свои задачи, а вы видите успеваемость каждого в статистике."],
           ].map(([t, d], i) => (
             <div key={t} className="card p-6">
@@ -161,34 +175,16 @@ export default async function Home() {
       {/* Типы модулей */}
       <section>
         <h2 className="text-center text-2xl font-extrabold text-ocean-900">Из чего состоит каждый урок</h2>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {TYPE_ORDER.map((t) => {
             const m = MODULE_META[t];
-            const main = t === "simulation";
             return (
-              <div
-                key={t}
-                className={
-                  main
-                    ? "relative overflow-hidden rounded-2xl bg-ocean-700 p-6 text-white sm:col-span-2 lg:col-span-3"
-                    : "card p-5"
-                }
-              >
-                <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${main ? "bg-white/10 text-sun-400" : m.tile}`}>
+              <div key={t} className="card p-5">
+                <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${m.tile}`}>
                   <Icon name={t} className="h-6 w-6" />
                 </span>
-                <h3 className={`mt-4 text-lg font-bold ${main ? "" : "text-ocean-900"}`}>{m.label}</h3>
-                <p className={main ? "mt-1 text-aqua-200" : "mt-1 text-sm text-slate-600"}>{m.hint}</p>
-                {main && (
-                  <>
-                    <p className="mt-4 text-sm text-aqua-100/80">
-                      Центр каждого урока: ученики сами меняют параметры и видят, как работает закон.
-                    </p>
-                    <span className="pill mt-6 bg-sun-400 text-ocean-950">
-                      <Icon name="star" className="h-3.5 w-3.5" /> главное
-                    </span>
-                  </>
-                )}
+                <h3 className="mt-4 text-lg font-bold text-ocean-900">{m.label}</h3>
+                <p className="mt-1 text-sm text-slate-600">{m.hint}</p>
               </div>
             );
           })}

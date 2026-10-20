@@ -108,11 +108,6 @@ export default function TopicView({ modules }: { modules: TopicModule[] }) {
                     <span className="min-w-0">
                       <span className="flex items-center gap-2 text-xs font-semibold">
                         <span className={active && isSim ? "text-aqua-200" : "text-slate-400"}>{i + 1}. {meta.label}</span>
-                        {isSim && (
-                          <span className={`pill px-1.5 py-0 ${active ? "bg-sun-400 text-ocean-950" : "bg-sun-100 text-sun-900"}`}>
-                            <Icon name="star" className="h-3 w-3" /> главное
-                          </span>
-                        )}
                       </span>
                       <span className={`mt-0.5 block text-sm font-semibold leading-snug ${active && isSim ? "" : "text-ocean-900"}`}>
                         <Rich text={shortTitle(mod.title)} />

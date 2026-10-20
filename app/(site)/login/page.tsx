@@ -57,7 +57,7 @@ export default function LoginPage() {
             </h2>
             <ul className="mt-6 space-y-2 text-aqua-100">
               <li>● Программа 7–11 классов по учебнику</li>
-              <li>● WebGL-симуляции в центре урока</li>
+              <li>● Интерактивные симуляции опытов</li>
               <li>● Конспекты, графики, квизы и карточки</li>
             </ul>
           </div>
