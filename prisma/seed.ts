@@ -20,6 +20,8 @@ function resolveBuildUrl(m: ModuleSeed) {
 async function main() {
   let topicCount = 0;
   let moduleCount = 0;
+  // Встроенные модули, которые администратор удалил вместе с пакетом темы, — не возвращаем
+  const removed = new Set((await prisma.removedModule.findMany({ select: { id: true } })).map((r) => r.id));
 
   for (const g of curriculum) {
     const grade = await prisma.grade.upsert({
@@ -31,7 +33,7 @@ async function main() {
     for (const [si, s] of g.sections.entries()) {
       const section = await prisma.section.upsert({
         where: { gradeId_title: { gradeId: grade.id, title: s.title } },
-        update: { order: si },
+        update: { order: si, source: "seed" },
         create: { title: s.title, order: si, gradeId: grade.id },
       });
 
@@ -40,13 +42,14 @@ async function main() {
         const paragraph = "paragraph" in t ? (t.paragraph ?? null) : null;
         const topic = await prisma.topic.upsert({
           where: { sectionId_title: { sectionId: section.id, title: t.title } },
-          update: { order: ti, paragraph },
+          update: { order: ti, paragraph, source: "seed" },
           create: { title: t.title, order: ti, paragraph, sectionId: section.id },
         });
         topicCount++;
 
         const modules = "modules" in t ? (t.modules ?? []) : [];
         for (const [mi, m] of modules.entries()) {
+          if (removed.has(m.id)) continue;
           const data = {
             type: m.type,
             title: m.title,

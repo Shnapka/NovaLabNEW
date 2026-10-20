@@ -50,6 +50,12 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-novalab}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-novalab}?connection_limit=5&pool_timeout=20
       AUTH_SECRET: ${AUTH_SECRET:?задайте AUTH_SECRET}
       AUTH_TRUST_HOST: "true"
+      # Почта для кодов восстановления пароля (без SMTP_HOST восстановление отвечает «не настроено»)
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:-}
     volumes:
       - data:/data
     depends_on:

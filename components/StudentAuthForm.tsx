@@ -77,6 +77,11 @@ export default function StudentAuthForm() {
             onChange={(e) => setPassword(e.target.value)}
           />
           {mode === "register" && <span className="mt-1 block text-xs text-slate-500">Минимум 8 символов</span>}
+          {mode === "login" && (
+            <a href="/forgot?role=student" onClick={() => sessionStorage.setItem("nl_forgot_email", email)} className="mt-1.5 inline-block text-xs font-semibold text-lagoon-700 hover:text-ocean-700">
+              Забыли пароль?
+            </a>
+          )}
         </label>
         {mode === "register" && (
           <label className="block">

@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
   // На Railway и локально (без прокси) Next сжимает сам.
   compress: process.env.NEXT_COMPRESS !== "0",
   // Библиотеки ZIP работают с файлами на сервере — не упаковываем их в бандл
-  serverExternalPackages: ["yauzl", "yazl"],
+  serverExternalPackages: ["yauzl", "yazl", "nodemailer"],
 };
 
 export default nextConfig;

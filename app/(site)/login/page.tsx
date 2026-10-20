@@ -132,6 +132,11 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
               />
               {mode === "register" && <span className="mt-1 block text-xs text-slate-500">Минимум 8 символов</span>}
+              {mode === "login" && (
+                <a href="/forgot" onClick={() => sessionStorage.setItem("nl_forgot_email", email)} className="mt-1.5 inline-block text-xs font-semibold text-lagoon-700 hover:text-ocean-700">
+                  Забыли пароль?
+                </a>
+              )}
             </label>
             {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
             <button disabled={busy} className="btn-primary w-full py-3 text-base">

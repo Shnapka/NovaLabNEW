@@ -23,7 +23,21 @@ model User {
   classrooms   Classroom[]
   memberships  Student[] // для роли STUDENT: участие в классах
   reviews      TeacherReview[]
+  resets       PasswordReset[]
   createdAt    DateTime @default(now())
+}
+
+// Код восстановления пароля, отправленный на почту. В базе только хэш; код живёт 15 минут и даёт 5 попыток.
+model PasswordReset {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String
+  attempts  Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 // Администратор платформы. Отдельно от пользователей сайта: регистрации через сайт нет,
@@ -52,6 +66,7 @@ model Section {
   grade   Grade   @relation(fields: [gradeId], references: [id])
   topics  Topic[]
   terms   ClassTerm[]
+  source  String  @default("seed") // seed — из программы content/curriculum.ts; package — создан пакетом темы
 
   @@unique([gradeId, title])
 }
@@ -66,6 +81,7 @@ model Topic {
   modules   Module[]
   labNotes  LabNote[]
   packages  TopicPackage[]
+  source    String   @default("seed") // seed — из программы content/curriculum.ts; package — создана пакетом темы
 
   @@unique([sectionId, title])
 }
@@ -99,6 +115,15 @@ model TopicPackage {
   modules    Json     @default("[]") // [{ id, type, title }]
   uploadedBy String?
   createdAt  DateTime @default(now())
+  removedAt  DateTime? // пакет темы удалён администратором
+  removedBy  String?
+}
+
+// Встроенный модуль, удалённый администратором вместе с пакетом темы: сид больше не создаёт его заново.
+// Загрузка пакета с тем же id модуля снимает отметку.
+model RemovedModule {
+  id        String   @id
+  removedAt DateTime @default(now())
 }
 
 model Lesson {

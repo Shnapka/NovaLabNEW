@@ -135,15 +135,20 @@ async function saveToDb(m: Manifest, fileName: string, size: number, uploadedBy:
     let section = await tx.section.findUnique({ where: { gradeId_title: { gradeId: grade.id, title: m.section } } });
     if (!section) {
       const last = await tx.section.aggregate({ where: { gradeId: grade.id }, _max: { order: true } });
-      section = await tx.section.create({ data: { gradeId: grade.id, title: m.section, order: (last._max.order ?? -1) + 1 } });
+      section = await tx.section.create({ data: { gradeId: grade.id, title: m.section, order: (last._max.order ?? -1) + 1, source: "package" } });
     }
     let topic = await tx.topic.findUnique({ where: { sectionId_title: { sectionId: section.id, title: m.topic } } });
     if (topic) {
       topic = await tx.topic.update({ where: { id: topic.id }, data: { paragraph: m.paragraph ?? topic.paragraph } });
     } else {
       const last = await tx.topic.aggregate({ where: { sectionId: section.id }, _max: { order: true } });
-      topic = await tx.topic.create({ data: { sectionId: section.id, title: m.topic, paragraph: m.paragraph ?? null, order: (last._max.order ?? -1) + 1 } });
+      topic = await tx.topic.create({
+        data: { sectionId: section.id, title: m.topic, paragraph: m.paragraph ?? null, order: (last._max.order ?? -1) + 1, source: "package" },
+      });
     }
+
+    // Пакет возвращает модули, удалённые раньше: снимаем отметку, иначе их не будет и после сида
+    await tx.removedModule.deleteMany({ where: { id: { in: m.modules.map((mod) => mod.id) } } });
 
     const done: { id: string; type: string; title: string; created: boolean }[] = [];
     for (const [order, mod] of m.modules.entries()) {

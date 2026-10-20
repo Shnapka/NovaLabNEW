@@ -3,6 +3,7 @@ import { adminSession } from "@/lib/authz";
 import { prisma } from "@/lib/db";
 import { metaOf } from "@/lib/modules/meta";
 import PackageUploader from "@/components/admin/PackageUploader";
+import DeletePackageButton from "@/components/admin/DeletePackageButton";
 
 const time = (d: Date) => d.toLocaleString("ru-RU", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 const mb = (n: number) => `${(n / 1024 / 1024).toFixed(1)} МБ`;
@@ -31,7 +32,7 @@ export default async function AdminPackages() {
       <div>
         <h1 className="text-3xl font-extrabold text-slate-900">Пакеты тем</h1>
         <p className="text-slate-500">
-          Тема = пакет модулей: конспект, графики, симуляция, практика, квиз, карточки. Формат — в docs/TOPIC-PACKAGES.md; образец — «Скачать пакет» у любой темы ниже.
+          Тема = пакет модулей: конспект, графики, симуляция, практика, квиз, карточки. Формат — в docs/TOPIC-PACKAGES.md; образец — «Скачать пакет» у любой темы ниже. Удаление пакета подтверждается кодом.
         </p>
       </div>
 
@@ -58,6 +59,7 @@ export default async function AdminPackages() {
                 {t.modules.some((m) => m.source === "package") ? "из пакета" : "встроенная"}
               </span>
               <a href={`/api/admin/packages/export?topicId=${t.id}`} className="font-semibold text-ocean-700 hover:underline">Скачать пакет</a>
+              <DeletePackageButton topicId={t.id} />
             </li>
           ))}
         </ul>
@@ -77,6 +79,7 @@ export default async function AdminPackages() {
                     {p.fileName} · {mb(p.size)} · версия {p.version} · {(p.modules as unknown[]).length} модулей
                   </span>
                 </span>
+                {p.removedAt && <span className="pill bg-rose-50 text-rose-700" title={p.removedBy ?? undefined}>удалён {time(p.removedAt)}</span>}
                 <span className="text-xs text-slate-500">{p.uploadedBy} · {time(p.createdAt)}</span>
               </li>
             ))}
