@@ -10,16 +10,20 @@ const time = (d: Date) => d.toLocaleString("ru-RU", { day: "numeric", month: "sh
 export default async function AdminOverview() {
   if (!(await adminSession())) redirect("/admin/login");
 
-  const [teachers, studentAccounts, students, classes, lessons, feedback, reviews] = await Promise.all([
+  // Отзывов учеников со временем станет много: для графика берём только счётчики оценок, а полностью — 6 последних
+  const [teachers, studentAccounts, students, classes, lessons, ratingCounts, recentFeedback, reviews] = await Promise.all([
     prisma.user.count({ where: { role: "TEACHER" } }),
     prisma.user.count({ where: { role: "STUDENT" } }),
     prisma.student.count(),
     prisma.classroom.count(),
     prisma.lesson.count(),
-    prisma.lessonFeedback.findMany({ orderBy: { updatedAt: "desc" } }),
-    prisma.teacherReview.findMany({ orderBy: { updatedAt: "desc" } }),
+    prisma.lessonFeedback.groupBy({ by: ["rating"], _count: { _all: true } }),
+    prisma.lessonFeedback.findMany({ orderBy: { updatedAt: "desc" }, take: 6 }),
+    prisma.teacherReview.findMany({ orderBy: { updatedAt: "desc" }, select: { id: true, rating: true, answers: true, comment: true, lessonTitle: true, teacherName: true, classroomName: true, updatedAt: true } }),
   ]);
-  const sAvg = avg(feedback.map((f) => f.rating));
+  const studentRatings = ratingCounts.flatMap((c) => Array<number>(c._count._all).fill(c.rating));
+  const feedback = { length: studentRatings.length, recent: recentFeedback };
+  const sAvg = avg(studentRatings);
   const tAvg = avg(reviews.map((r) => r.rating));
 
   return (
@@ -48,7 +52,7 @@ export default async function AdminOverview() {
         <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
           <h2 className="font-bold text-slate-900">Оценки учеников</h2>
           <p className="mb-4 text-xs text-slate-500">Сколько раз поставлена каждая оценка от 1 до 10</p>
-          {feedback.length ? <RatingHistogram ratings={feedback.map((f) => f.rating)} label="Оценки учеников" /> : <Empty />}
+          {feedback.length ? <RatingHistogram ratings={studentRatings} label="Оценки учеников" /> : <Empty />}
         </div>
         <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
           <h2 className="font-bold text-slate-900">Оценки учителей</h2>
@@ -85,7 +89,7 @@ export default async function AdminOverview() {
 
       <section className="grid gap-4 lg:grid-cols-2">
         <Recent title="Последние отзывы учеников" href="/admin/students">
-          {feedback.slice(0, 6).map((f) => (
+          {feedback.recent.map((f) => (
             <li key={f.id} className="flex gap-3 py-2.5">
               <Score r={f.rating} />
               <div className="min-w-0 text-sm">

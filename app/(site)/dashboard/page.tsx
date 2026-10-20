@@ -7,19 +7,43 @@ import { metaOf } from "@/lib/modules/meta";
 import NewLessonButton from "@/components/NewLessonButton";
 import DeleteLessonButton from "@/components/DeleteLessonButton";
 import Icon from "@/components/Icon";
+import LessonFilterBar from "@/components/LessonFilterBar";
+import { lessonGroup } from "@/lib/classData";
 
-export default async function Dashboard() {
+export default async function Dashboard({ searchParams }: { searchParams: Promise<{ q?: string; section?: string; class?: string }> }) {
   const session = await teacherSession();
   if (!session?.user?.id) redirect("/login?next=/dashboard");
+  const { q, section, class: klass } = await searchParams;
 
-  const lessons = await prisma.lesson.findMany({
-    where: { ownerId: session.user.id },
-    orderBy: { updatedAt: "desc" },
-    include: {
-      blocks: { orderBy: { position: "asc" }, include: { module: { select: { type: true } } } },
-      _count: { select: { classrooms: true, results: true } },
-    },
-  });
+  const [all, classes] = await Promise.all([
+    prisma.lesson.findMany({
+      where: { ownerId: session.user.id },
+      orderBy: { updatedAt: "desc" },
+      include: {
+        blocks: {
+          orderBy: { position: "asc" },
+          include: { module: { select: { type: true, topic: { select: { title: true, paragraph: true, section: { select: { id: true, title: true, order: true, grade: { select: { number: true } } } } } } } } },
+        },
+        classrooms: { select: { id: true } },
+        _count: { select: { classrooms: true, results: true } },
+      },
+    }),
+    prisma.classroom.findMany({ where: { ownerId: session.user.id }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
+  ]);
+
+  // Фильтр: поиск по названию, раздел учебника, класс
+  const withGroup = all.map((l) => ({ ...l, group: lessonGroup(l.blocks) }));
+  const sections = [...new Map(withGroup.map((l) => [l.group.key, l.group])).values()]
+    .filter((g) => g.key !== "none")
+    .sort((a, b) => a.order - b.order)
+    .map((g) => ({ value: g.key, label: g.label }));
+  const needle = q?.trim().toLowerCase();
+  const lessons = withGroup.filter(
+    (l) =>
+      (!needle || l.title.toLowerCase().includes(needle)) &&
+      (!section || l.group.key === section) &&
+      (!klass || (klass === "none" ? l.classrooms.length === 0 : l.classrooms.some((c) => c.id === klass))),
+  );
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
@@ -36,7 +60,26 @@ export default async function Dashboard() {
         </div>
       </div>
 
-      {lessons.length === 0 ? (
+      {all.length > 0 && (
+        <LessonFilterBar
+          action="/dashboard"
+          q={q}
+          section={section}
+          sections={sections}
+          klass={klass}
+          classes={classes.map((c) => ({ value: c.id, label: c.name }))}
+          shown={lessons.length}
+          total={all.length}
+        />
+      )}
+
+      {all.length > 0 && lessons.length === 0 && (
+        <div className="card p-8 text-center text-slate-500">
+          По этому фильтру уроков нет. <Link href="/dashboard" className="font-semibold text-ocean-700">Показать все</Link>
+        </div>
+      )}
+
+      {all.length === 0 ? (
         <div className="card flex flex-col items-center px-6 py-16 text-center">
           <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-sun-100 text-sun-600">
             <Icon name="layers" className="h-7 w-7" />

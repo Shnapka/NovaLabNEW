@@ -63,6 +63,20 @@ export default function ClassLessons({ classId, assigned, myOther, topics }: { c
   // Тема уже есть в классе (урок собран из неё) — подсказываем, чтобы не создать копию случайно
   const assignedTopics = new Set(assigned.map((l) => l.topic).filter(Boolean));
 
+  // Лёгкий фильтр: поиск, раздел, только уроки со сроком; в панели добавления — поиск по библиотеке
+  const [query, setQuery] = useState("");
+  const [section, setSection] = useState("");
+  const [onlyDue, setOnlyDue] = useState(false);
+  const [libQuery, setLibQuery] = useState("");
+  const needle = query.trim().toLowerCase();
+  const sectionsOfClass = [...new Set(assigned.map((l) => l.group))];
+  const shown = assigned.filter(
+    (l) => (!needle || l.title.toLowerCase().includes(needle)) && (!section || l.group === section) && (!onlyDue || !!l.dueAt),
+  );
+  const libNeedle = libQuery.trim().toLowerCase();
+  const libTopics = libNeedle ? topics.filter((t) => `${t.paragraph ?? ""} ${t.title}`.toLowerCase().includes(libNeedle)) : topics;
+  const myShown = libNeedle ? myOther.filter((l) => l.title.toLowerCase().includes(libNeedle)) : myOther;
+
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
       {dialog}
@@ -71,11 +85,30 @@ export default function ClassLessons({ classId, assigned, myOther, topics }: { c
         <p className="mb-4 text-sm text-slate-500">
           Ученики видят все эти уроки. «+ срок» — дата и время, после которых урок уже нельзя выполнить: результаты не принимаются.
         </p>
+        {assigned.length > 3 && (
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <label className="relative min-w-44 flex-1">
+              <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mist-300" />
+              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Найти урок" className="input py-2 pl-9 text-sm" />
+            </label>
+            {sectionsOfClass.length > 1 && (
+              <select value={section} onChange={(e) => setSection(e.target.value)} className="input w-auto max-w-56 py-2 text-sm">
+                <option value="">Все разделы</option>
+                {sectionsOfClass.map((g) => <option key={g} value={g}>{g}</option>)}
+              </select>
+            )}
+            <label className="flex cursor-pointer items-center gap-1.5 text-sm text-slate-600">
+              <input type="checkbox" checked={onlyDue} onChange={(e) => setOnlyDue(e.target.checked)} className="h-4 w-4 accent-ocean-700" /> со сроком
+            </label>
+          </div>
+        )}
         {assigned.length === 0 ? (
           <p className="rounded-xl border-2 border-dashed border-mist-200 p-6 text-center text-slate-500">Добавьте первый урок справа</p>
+        ) : shown.length === 0 ? (
+          <p className="rounded-xl bg-mist-50 p-6 text-center text-sm text-slate-500">По этому фильтру уроков нет.</p>
         ) : (
           <div className="space-y-5">
-            {groupBy(assigned, (l) => l.group).map(([group, ls]) => (
+            {groupBy(shown, (l) => l.group).map(([group, ls]) => (
               <div key={group}>
                 <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-lagoon-700">
                   <Icon name="book" className="h-4 w-4" /> {group}
@@ -134,10 +167,14 @@ export default function ClassLessons({ classId, assigned, myOther, topics }: { c
               ))}
             </div>
             {error && <p className="mb-2 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
+            <label className="relative mb-3 block">
+              <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mist-300" />
+              <input value={libQuery} onChange={(e) => setLibQuery(e.target.value)} placeholder="Тема или §" className="input py-2 pl-9 text-sm" />
+            </label>
 
             <div className="max-h-[60vh] space-y-4 overflow-y-auto pr-1">
               {tab === "library" ? (
-                groupBy(topics, (t) => `${t.grade} кл. · ${t.section}`).map(([group, ts]) => (
+                groupBy(libTopics, (t) => `${t.grade} кл. · ${t.section}`).map(([group, ts]) => (
                   <div key={group}>
                     <div className="mb-1.5 text-xs font-bold uppercase tracking-wide text-lagoon-700">{group}</div>
                     <ul className="space-y-1.5">
@@ -169,7 +206,7 @@ export default function ClassLessons({ classId, assigned, myOther, topics }: { c
                   Все ваши уроки уже в этом классе. Соберите новый в <Link href="/dashboard" className="font-semibold text-ocean-700">«Мои уроки»</Link>.
                 </p>
               ) : (
-                groupBy(myOther, (l) => l.group).map(([group, ls]) => (
+                groupBy(myShown, (l) => l.group).map(([group, ls]) => (
                   <div key={group}>
                     <div className="mb-1.5 text-xs font-bold uppercase tracking-wide text-lagoon-700">{group}</div>
                     <ul className="space-y-1.5">

@@ -40,4 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 !.env.example
+!.env.production.example
+
+# файлы пакетов тем (Unity-билды из панели администратора) и предсжатые копии билдов
+/data
+public/modules/**/*.br
 

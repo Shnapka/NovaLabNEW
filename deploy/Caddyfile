@@ -1,0 +1,39 @@
+# Caddy: HTTPS (Let's Encrypt автоматически), сжатие и отдача тяжёлых файлов без участия Node
+{$DOMAIN:localhost} {
+	encode zstd gzip
+
+	# Unity-билды, встроенные в сайт: готовые .br (Brotli) лежат рядом с файлами
+	handle /modules/* {
+		root * /srv
+		header Cache-Control "public, max-age=604800"
+		file_server {
+			precompressed br
+		}
+	}
+
+	# Unity-билды из пакетов тем (том данных сайта, смонтирован в /srv/data только для чтения)
+	handle /content/modules/* {
+		uri strip_prefix /content
+		root * /srv/data
+		@html path *.html
+		header @html Cache-Control "no-cache"
+		header -@html Cache-Control "public, max-age=86400"
+		file_server {
+			precompressed br
+		}
+	}
+
+	# Остальное — сайт. Загрузка пакетов до 500 МБ
+	handle {
+		request_body {
+			max_size 520MB
+		}
+		reverse_proxy web:3000
+	}
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+}

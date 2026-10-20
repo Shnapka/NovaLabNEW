@@ -1,0 +1,10 @@
+node_modules
+.next
+.git
+data
+*.log
+.env
+.env.*
+!.env.example
+!.env.production.example
+public/modules/**/*.br

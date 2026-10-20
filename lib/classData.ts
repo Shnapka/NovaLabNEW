@@ -60,7 +60,19 @@ export async function loadClassForTeacher(id: string, ownerId: string) {
         include: {
           blocks: {
             orderBy: { position: "asc" },
-            include: { module: { include: { topic: { include: { section: { include: { grade: true } } } } } } },
+            // Только нужные поля: без настроек симуляций (configSchema) и лишних колонок — меньше памяти на запрос
+            select: {
+              moduleId: true,
+              config: true,
+              module: {
+                select: {
+                  type: true,
+                  title: true,
+                  content: true,
+                  topic: { select: { title: true, paragraph: true, section: { select: { id: true, title: true, order: true, grade: { select: { number: true } } } } } },
+                },
+              },
+            },
           },
         },
       },

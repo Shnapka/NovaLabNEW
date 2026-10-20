@@ -1,5 +1,9 @@
 # Выкладка NovaLab на Railway
 
+> Основной сервер — VPS, см. **DEPLOY-VPS.md**. Railway остаётся тестовой площадкой.
+> Пакеты тем на Railway: файлы билдов пишутся в `./data` и **пропадают при следующей выкладке**,
+> если не подключить Railway Volume и не задать `DATA_DIR=/data`. Описания тем в базе при этом сохраняются.
+
 Сайт: **https://web-production-4125d.up.railway.app**
 Проект Railway: `novalab` (сервисы `web` — сайт, `Postgres` — база).
 

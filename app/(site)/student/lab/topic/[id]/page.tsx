@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getStudentContext, labOwner } from "@/lib/student";
 import { TYPE_ORDER } from "@/lib/modules/meta";
-import { isLabType } from "@/lib/lab";
+import { isLabType, studentGrades } from "@/lib/lab";
 import LabTopic from "@/components/LabTopic";
 
 // Тема в «Моей лаборатории»: конспект, графики, симуляция, практика — без оценок — и личная заметка
@@ -18,6 +18,8 @@ export default async function LabTopicPage({ params }: { params: Promise<{ id: s
     include: { modules: { orderBy: { order: "asc" } }, section: { include: { grade: true } } },
   });
   if (!topic) notFound();
+  // Тема учебника чужого класса недоступна
+  if (!(await studentGrades(ctx.students.map((s) => s.classroomId))).includes(topic.section.grade.number)) notFound();
   const note = await prisma.labNote.findUnique({ where: { owner_topicId: { owner, topicId: id } } });
 
   const modules = topic.modules

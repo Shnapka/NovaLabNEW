@@ -7,6 +7,7 @@ const LINKS = [
   { href: "/admin/lessons", label: "По урокам" },
   { href: "/admin/students", label: "Отзывы учеников" },
   { href: "/admin/teachers", label: "Анкеты учителей" },
+  { href: "/admin/packages", label: "Пакеты тем" },
 ];
 
 export default function AdminNav() {

@@ -1,0 +1,79 @@
+# NovaLab на VPS (рассчитано на PS Basic-3: 4 vCPU, 4 ГБ, 80 ГБ). Запуск:
+#   cp .env.production.example .env.production   # заполнить
+#   docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+# Бюджет памяти: база ≤ 768 МБ, сайт ≤ 640 МБ, Caddy ≤ 128 МБ — остальное остаётся системе и кэшу диска.
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-novalab}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?задайте POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-novalab}
+    # Настройки под малую машину: немного соединений, умеренные буферы
+    command: >
+      postgres
+      -c max_connections=30
+      -c shared_buffers=192MB
+      -c effective_cache_size=768MB
+      -c work_mem=4MB
+      -c maintenance_work_mem=64MB
+      -c wal_buffers=8MB
+      -c random_page_cost=1.1
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    mem_limit: 768m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-novalab}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    # Порт наружу не открываем — база доступна только сайту внутри сети Docker
+
+  migrate:
+    build: { context: ., target: migrate }
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-novalab}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-novalab}
+      SEED: ${SEED:-1}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    depends_on:
+      db: { condition: service_healthy }
+    restart: "no"
+
+  web:
+    build: { context: ., target: web }
+    restart: unless-stopped
+    environment:
+      # connection_limit — не больше 5 соединений с базой из пула Prisma
+      DATABASE_URL: postgresql://${POSTGRES_USER:-novalab}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-novalab}?connection_limit=5&pool_timeout=20
+      AUTH_SECRET: ${AUTH_SECRET:?задайте AUTH_SECRET}
+      AUTH_TRUST_HOST: "true"
+    volumes:
+      - data:/data
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    mem_limit: 640m
+
+  caddy:
+    build: { context: ., target: caddy }
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - data:/srv/data:ro # файлы пакетов тем — только чтение
+      - caddy_data:/data # сертификаты HTTPS (так устроен Caddy)
+      - caddy_config:/config
+    depends_on: [web]
+    mem_limit: 128m
+
+volumes:
+  pgdata:
+  data:
+  caddy_data:
+  caddy_config:
