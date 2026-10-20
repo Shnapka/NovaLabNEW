@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { GRADED_TYPES, computeLessonStats, type GradedModule } from "@/lib/stats";
 import { applyOverride } from "@/lib/modules/overrides";
+import { kindsOf } from "@/lib/practice/kinds";
 
 type BlockWithModule = { moduleId: string; config?: unknown; module: { type: string; title: string; content: unknown } };
 
@@ -14,6 +15,7 @@ export function gradedOf(blocks: BlockWithModule[]): GradedModule[] {
       type: b.module.type,
       title: applyOverride(b.module, b.config).title,
       goal: Number((b.module.content as { goal?: number })?.goal ?? 1),
+      kinds: b.module.type === "practice" ? kindsOf((b.module.content as { topic?: string })?.topic).map((k) => k.value) : undefined,
     }));
 }
 

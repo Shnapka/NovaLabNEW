@@ -79,3 +79,14 @@
 @utility pill {
   @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
 }
+
+/* Анимация знака NovaLab на главной */
+@keyframes nova-float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
+@keyframes nova-glow { 0%, 100% { opacity: .55; transform: scale(.94); } 50% { opacity: 1; transform: scale(1.06); } }
+@keyframes nova-twinkle { 0%, 100% { opacity: .25; transform: scale(.6); } 50% { opacity: 1; transform: scale(1); } }
+.nova-float { animation: nova-float 6s ease-in-out infinite; transform-origin: 50% 50%; }
+.nova-glow { animation: nova-glow 4s ease-in-out infinite; transform-origin: 256px 256px; transform-box: view-box; }
+.nova-twinkle { animation: nova-twinkle 2.6s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+.nova-twinkle--mid { animation-delay: .9s; }
+.nova-twinkle--late { animation-delay: 1.7s; }
+@media (prefers-reduced-motion: reduce) { .nova-float, .nova-glow, .nova-twinkle { animation: none; } }

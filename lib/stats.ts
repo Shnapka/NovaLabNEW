@@ -1,7 +1,10 @@
 // Статистика урока для учителя: ученики × оцениваемые модули
 export const GRADED_TYPES = ["practice", "quiz", "matching"];
 
-export type GradedModule = { moduleId: string; type: string; title: string; goal: number };
+import { solvedKinds } from "@/lib/practice/kinds";
+
+// kinds — типы задач практики (цель: решить задачу каждого типа); пусто — старая цель «goal задач»
+export type GradedModule = { moduleId: string; type: string; title: string; goal: number; kinds?: string[] };
 export type ResultRow = {
   id: string;
   studentId: string;
@@ -19,6 +22,7 @@ export type Cell = {
   correct: number; // верно решённых задач (практика)
   score: number | null; // итог по модулю 0..1, null — не начинал
   done: boolean; // модуль выполнен
+  kindsSolved: string[]; // практика: решённые типы задач
 };
 
 export type StudentRow = {
@@ -42,9 +46,14 @@ export function computeLessonStats(modules: GradedModule[], students: { id: stri
       const correct = rs.filter((r) => r.correct).length;
       let score: number | null = null;
       let done = false;
+      let kindsSolved: string[] = [];
       if (attempts) {
-        if (m.type === "practice") {
-          // Практика: точность (верно / попыток), выполнено — если решено не меньше goal задач
+        if (m.type === "practice" && m.kinds?.length) {
+          // Практика: балл — доля решённых типов задач, выполнено — решён каждый тип
+          kindsSolved = solvedKinds(m.kinds, rs);
+          score = kindsSolved.length / m.kinds.length;
+          done = kindsSolved.length === m.kinds.length;
+        } else if (m.type === "practice") {
           score = correct / attempts;
           done = correct >= m.goal;
         } else {
@@ -52,7 +61,7 @@ export function computeLessonStats(modules: GradedModule[], students: { id: stri
           done = true;
         }
       }
-      cells[m.moduleId] = { attempts, best, correct, score, done };
+      cells[m.moduleId] = { attempts, best, correct, score, done, kindsSolved };
     }
     const started = Object.values(cells).filter((c) => c.score !== null);
     return {
@@ -102,3 +111,10 @@ export const scoreClass = (x: number | null) =>
       : x >= 0.6
         ? "bg-sun-100 text-sun-900"
         : "bg-rose-100 text-rose-800";
+
+/** Подпись ячейки практики: «3 из 5 типов» (или «2 из 3» в старом режиме) */
+export function practiceLabel(m: GradedModule, c: Cell) {
+  if (!c.attempts) return "—";
+  const text = m.kinds?.length ? `${c.kindsSolved.length} из ${m.kinds.length} типов` : `${c.correct} из ${m.goal}`;
+  return text + (c.done ? " ✓" : "");
+}

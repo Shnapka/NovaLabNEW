@@ -3,6 +3,7 @@ import { useState } from "react";
 import LessonPlayer, { type PlayerBlock } from "./LessonPlayer";
 import type { ModuleEvent } from "./ModuleFrame";
 import PracticeLog, { type PracticeAttempt } from "./PracticeLog";
+import { kindOf } from "@/lib/practice/kinds";
 import StudentFeedback, { type MyFeedback } from "./feedback/StudentFeedback";
 
 // События модулей, которые идут в статистику учителя
@@ -52,6 +53,7 @@ export default function StudentLesson({
           unit: data.unit,
           difficulty: data.difficulty ?? 1,
           solution: String((e.data as { solutionText?: unknown } | undefined)?.solutionText ?? "").trim(),
+          kind: kindOf(e.data),
           at: new Date().toISOString(),
         };
         setPractice((p) => ({ ...p, [moduleId]: [attempt, ...(p[moduleId] ?? [])] }));
@@ -81,10 +83,7 @@ export default function StudentLesson({
           b.type === "practice" && b.moduleId ? (
             <PracticeLog
               attempts={practice[b.moduleId] ?? []}
-              goal={Number((b.content as { goal?: number } | null)?.goal ?? 3)}
-              onSolution={(id, text) =>
-                setPractice((p) => ({ ...p, [b.moduleId!]: (p[b.moduleId!] ?? []).map((x) => (x.id === id ? { ...x, solution: text } : x)) }))
-              }
+              topic={(b.content as { topic?: string } | null)?.topic}
             />
           ) : null
         }

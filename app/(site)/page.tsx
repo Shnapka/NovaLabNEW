@@ -4,25 +4,45 @@ import { prisma } from "@/lib/db";
 import { MODULE_META, TYPE_ORDER } from "@/lib/modules/meta";
 import Icon from "@/components/Icon";
 
-function HeroArt() {
+// Знак NovaLab на главной: буква N вырезана из звезды (сквозь неё видно фон), лёгкая анимация — парение, блик, искры
+function HeroLogo() {
   return (
-    <svg viewBox="0 0 320 260" className="h-full w-full" aria-hidden>
+    <svg viewBox="0 0 512 512" className="nova-float h-full w-full overflow-visible" aria-label="NovaLab">
       <defs>
-        <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+        <radialGradient id="hero-glow" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#F2BA00" stopOpacity="0.55" />
           <stop offset="100%" stopColor="#F2BA00" stopOpacity="0" />
         </radialGradient>
+        {/* маска: звезда видна везде, кроме буквы N — там «дырка» */}
+        <mask id="hero-cut" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+          <rect width="512" height="512" fill="#fff" />
+          <path d="M168 322 196 190 252 322 280 190" fill="none" stroke="#000" strokeWidth="26" strokeMiterlimit="10" />
+        </mask>
+        <clipPath id="hero-star">
+          <path d="M256 40Q286.24 225.76 472 256Q286.24 286.24 256 472Q225.76 286.24 40 256Q225.76 225.76 256 40Z" />
+        </clipPath>
+        <linearGradient id="hero-shine" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#fff" stopOpacity="0" />
+          <stop offset="0.5" stopColor="#fff" stopOpacity="0.55" />
+          <stop offset="1" stopColor="#fff" stopOpacity="0" />
+        </linearGradient>
       </defs>
-      <circle cx="160" cy="130" r="70" fill="url(#glow)" />
-      <g fill="none" stroke="#99D8DE" strokeWidth="2" opacity="0.9">
-        <ellipse cx="160" cy="130" rx="120" ry="42" />
-        <ellipse cx="160" cy="130" rx="120" ry="42" transform="rotate(60 160 130)" />
-        <ellipse cx="160" cy="130" rx="120" ry="42" transform="rotate(-60 160 130)" />
+      <circle className="nova-glow" cx="256" cy="256" r="230" fill="url(#hero-glow)" />
+      <g mask="url(#hero-cut)">
+        <path d="M256 40Q286.24 225.76 472 256Q286.24 286.24 256 472Q225.76 286.24 40 256Q225.76 225.76 256 40Z" fill="#F2BA00" />
+        <path d="M256 40Q286.24 225.76 472 256Q286.24 286.24 256 472Z" fill="#DBA800" />
+        {/* блик пробегает по звезде */}
+        <g clipPath="url(#hero-star)">
+          <rect x="-200" y="0" width="140" height="512" fill="url(#hero-shine)" transform="skewX(-18)">
+            <animate attributeName="x" values="-200;720;720" keyTimes="0;0.45;1" dur="5s" repeatCount="indefinite" />
+          </rect>
+        </g>
       </g>
-      <circle cx="160" cy="130" r="16" fill="#F2BA00" />
-      <circle cx="280" cy="130" r="7" fill="#E2E8ED" />
-      <circle cx="100" cy="26" r="6" fill="#5DB3C1" />
-      <circle cx="100" cy="234" r="6" fill="#99D8DE" />
+      <path d="M308 190 284 322H346" fill="none" stroke="#FFFFFF" strokeWidth="26" strokeMiterlimit="10" />
+      {/* искры */}
+      <path className="nova-twinkle" d="M430 70q4 22 26 26q-22 4-26 26q-4-22-26-26q22-4 26-26Z" fill="#FFFFFF" />
+      <path className="nova-twinkle nova-twinkle--late" d="M82 400q3 16 19 19q-16 3-19 19q-3-16-19-19q16-3 19-19Z" fill="#99D8DE" />
+      <path className="nova-twinkle nova-twinkle--mid" d="M440 400q2 10 12 12q-10 2-12 12q-2-10-12-12q10-2 12-12Z" fill="#F2BA00" />
     </svg>
   );
 }
@@ -77,8 +97,8 @@ export default async function Home() {
             </dl>
           </div>
           {session?.user ? (
-            <div className="mx-auto hidden h-72 w-full max-w-sm lg:block">
-              <HeroArt />
+            <div className="mx-auto hidden h-80 w-full max-w-sm lg:block">
+              <HeroLogo />
             </div>
           ) : (
             // Первый выбор на сайте: кто вы

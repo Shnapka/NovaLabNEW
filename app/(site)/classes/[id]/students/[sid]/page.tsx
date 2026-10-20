@@ -3,11 +3,12 @@ import { notFound } from "next/navigation";
 import { teacherSession } from "@/lib/authz";
 import { loadClassForTeacher, shortTitle } from "@/lib/classData";
 import { metaOf } from "@/lib/modules/meta";
-import { pct, scoreClass } from "@/lib/stats";
+import { practiceLabel, pct, scoreClass } from "@/lib/stats";
 import Rich from "@/components/modules/Rich";
 import Icon from "@/components/Icon";
 import AttemptLine from "@/components/class/AttemptLine";
 import DeleteStudentButton from "@/components/class/DeleteStudentButton";
+import PracticeWork from "@/components/class/PracticeWork";
 
 // Профиль ученика: все уроки класса, баллы по модулям и все попытки
 export default async function ClassStudentPage({ params }: { params: Promise<{ id: string; sid: string }> }) {
@@ -90,7 +91,7 @@ export default async function ClassStudentPage({ params }: { params: Promise<{ i
                         <Rich text={titleOf[m.moduleId]} />
                       </span>
                       <span className={`shrink-0 rounded-lg px-2 py-0.5 font-semibold ${scoreClass(c.score)}`}>
-                        {m.type === "practice" ? (c.attempts ? `${c.correct} из ${m.goal}${c.done ? " ✓" : ""}` : "—") : pct(c.score)}
+                        {m.type === "practice" ? practiceLabel(m, c) : pct(c.score)}
                       </span>
                     </li>
                   );
@@ -99,12 +100,31 @@ export default async function ClassStudentPage({ params }: { params: Promise<{ i
               {row.attempts.length === 0 ? (
                 <p className="text-sm text-slate-400">Ученик ещё не работал на этом уроке.</p>
               ) : (
-                <details className="rounded-xl bg-mist-50 p-3" open={row.attempts.length <= 4}>
-                  <summary className="cursor-pointer text-sm font-semibold text-ocean-800">Все попытки ({row.attempts.length})</summary>
-                  <ul className="mt-2 space-y-2">
-                    {row.attempts.map((a) => <AttemptLine key={a.id} r={a} title={titleOf[a.moduleId] ?? a.moduleId} />)}
-                  </ul>
-                </details>
+                <div className="space-y-3">
+                  {/* Практика: задачи, которые ученик составил сам, по типам — с решением из окна симуляции */}
+                  {graded
+                    .filter((m) => m.type === "practice")
+                    .map((m) => (
+                      <PracticeWork
+                        key={m.moduleId}
+                        title={titleOf[m.moduleId]}
+                        topic={(lesson.blocks.find((b) => b.moduleId === m.moduleId)?.module.content as { topic?: string } | undefined)?.topic}
+                        attempts={row.attempts.filter((a) => a.moduleId === m.moduleId)}
+                      />
+                    ))}
+                  {row.attempts.some((a) => a.kind !== "practice") && (
+                    <details className="rounded-xl bg-mist-50 p-3">
+                      <summary className="cursor-pointer text-sm font-semibold text-ocean-800">
+                        Квизы и карточки ({row.attempts.filter((a) => a.kind !== "practice").length})
+                      </summary>
+                      <ul className="mt-2 space-y-2">
+                        {row.attempts
+                          .filter((a) => a.kind !== "practice")
+                          .map((a) => <AttemptLine key={a.id} r={a} title={titleOf[a.moduleId] ?? a.moduleId} />)}
+                      </ul>
+                    </details>
+                  )}
+                </div>
               )}
             </div>
           </section>

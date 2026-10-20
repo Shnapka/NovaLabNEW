@@ -58,55 +58,6 @@ export default function SimulationModule({
           </ul>
         </section>
       </div>
-
-      {content.notes && content.notes.length > 0 && (
-        <details className="rounded-xl border border-mist-100 p-4 text-sm">
-          <summary className="cursor-pointer font-semibold text-ocean-800">Упрощения модели — для учителя</summary>
-          <ul className="mt-3 list-disc space-y-1.5 pl-5 text-slate-700">
-            {content.notes.map((t, i) => <li key={i}><Rich text={t} /></li>)}
-          </ul>
-        </details>
-      )}
-
-      <details className="rounded-xl border border-mist-100 bg-mist-50 p-4 text-sm">
-        <summary className="cursor-pointer font-semibold text-slate-700">Параметры и события — для разработчика</summary>
-        <div className="mt-3 space-y-3 text-slate-700">
-          <div>
-            <div className="mb-1 font-medium">Управление в симуляции</div>
-            <table className="w-full">
-              <tbody>
-                {content.controls.map((c) => (
-                  <tr key={c.key} className="border-b last:border-0">
-                    <td className="py-1 pr-3 font-mono text-xs text-ocean-700">{c.key}</td>
-                    <td className="py-1 pr-3"><Rich text={c.label} /></td>
-                    <td className="py-1 text-slate-500">
-                      {c.kind === "slider" && `слайдер ${c.min}…${c.max} ${c.unit ?? ""}`}
-                      {c.kind === "toggle" && "переключатель"}
-                      {c.kind === "select" && c.options?.map((o) => o.label).join(" / ")}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div>
-            <div className="mb-1 font-medium">Настройки, которые сайт передаёт в Init(json)</div>
-            <pre className="overflow-x-auto rounded bg-white p-2 text-xs">{JSON.stringify(config, null, 2)}</pre>
-          </div>
-          {content.events && (
-            <div>
-              <div className="mb-1 font-medium">События модуля → сайт</div>
-              <ul className="space-y-0.5">
-                {content.events.map((e) => (
-                  <li key={e.type}>
-                    <span className="font-mono text-xs text-ocean-700">{e.type}</span> — {e.description}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      </details>
     </div>
   );
 }

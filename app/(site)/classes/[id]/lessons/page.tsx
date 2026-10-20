@@ -4,7 +4,7 @@ import { teacherSession } from "@/lib/authz";
 import { loadClassForTeacher, shortTitle } from "@/lib/classData";
 import { plural } from "@/lib/plural";
 import { metaOf } from "@/lib/modules/meta";
-import { pct, scoreClass } from "@/lib/stats";
+import { practiceLabel, pct, scoreClass } from "@/lib/stats";
 import Rich from "@/components/modules/Rich";
 import Icon from "@/components/Icon";
 import AttemptLine from "@/components/class/AttemptLine";
@@ -142,7 +142,7 @@ export default async function ClassLessonPage({
                       return (
                         <td key={m.moduleId} className="px-2 py-2 text-center">
                           <span className={`inline-block min-w-16 rounded-lg px-2 py-1 font-semibold ${scoreClass(c.score)}`}>
-                            {m.type === "practice" ? (c.attempts ? `${c.correct}/${m.goal}${c.done ? " ✓" : ""}` : "—") : pct(c.score)}
+                            {m.type === "practice" ? practiceLabel(m, c) : pct(c.score)}
                           </span>
                           {c.attempts > 0 && (
                             <div className="mt-0.5 text-[11px] text-slate-400">

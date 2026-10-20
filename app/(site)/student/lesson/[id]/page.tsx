@@ -4,6 +4,7 @@ import { getStudentContext, resolveStudentForLesson } from "@/lib/student";
 import StudentLesson from "@/components/StudentLesson";
 import type { PracticeAttempt } from "@/components/PracticeLog";
 import { applyOverride } from "@/lib/modules/overrides";
+import { kindOf, kindsOf, solvedKinds } from "@/lib/practice/kinds";
 
 export default async function StudentLessonPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -38,6 +39,7 @@ export default async function StudentLessonPage({ params }: { params: Promise<{ 
       unit: String(d.unit ?? ""),
       difficulty: Number(d.difficulty ?? 1),
       solution: typeof d.solutionText === "string" ? d.solutionText : "",
+      kind: kindOf(r.detail),
       at: r.createdAt.toISOString(),
     });
   }
@@ -51,7 +53,6 @@ export default async function StudentLessonPage({ params }: { params: Promise<{ 
       initialPractice={practice}
       initialFeedback={feedback ? { rating: feedback.rating, liked: feedback.liked ?? "", disliked: feedback.disliked ?? "" } : null}
       blocks={lesson.blocks.map((b) => {
-        const mine = practice[b.moduleId] ?? [];
         return {
           id: b.id,
           moduleId: b.moduleId,
@@ -59,10 +60,16 @@ export default async function StudentLessonPage({ params }: { params: Promise<{ 
           title: applyOverride(b.module, b.config).title,
           content: applyOverride(b.module, b.config).content,
           buildUrl: b.module.buildUrl,
-          // Практике передаём прогресс ученика: симуляция может продолжить счёт «2 из 3», а не начинать с нуля
+          // Практике передаём уже решённые типы задач: симуляция продолжит счёт «2 из 5 типов», а не начнёт с нуля
           config:
             b.module.type === "practice"
-              ? { ...((b.config as object) ?? {}), progress: { solved: mine.filter((a) => a.correct).length, attempts: mine.length } }
+              ? {
+                  ...((b.config as object) ?? {}),
+                  solvedKinds: solvedKinds(
+                    kindsOf((b.module.content as { topic?: string })?.topic).map((k) => k.value),
+                    results.filter((r) => r.moduleId === b.moduleId),
+                  ),
+                }
               : b.config,
         };
       })}

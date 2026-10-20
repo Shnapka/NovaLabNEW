@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getStudentContext } from "@/lib/student";
-import { computeLessonStats, pct, scoreClass } from "@/lib/stats";
+import { computeLessonStats, practiceLabel, pct, scoreClass } from "@/lib/stats";
 import { metaOf } from "@/lib/modules/meta";
 import Rich from "@/components/modules/Rich";
 import Icon from "@/components/Icon";
@@ -114,7 +114,7 @@ export default async function StudentProgressPage() {
                           <Rich text={shortTitle(m.title)} />
                         </span>
                         <span className={`shrink-0 rounded-lg px-2 py-0.5 font-semibold ${scoreClass(cell.score)}`}>
-                          {m.type === "practice" ? (cell.attempts ? `${cell.correct} из ${m.goal}${cell.done ? " ✓" : ""}` : "—") : pct(cell.score)}
+                          {m.type === "practice" ? practiceLabel(m, cell) : pct(cell.score)}
                         </span>
                       </li>
                     );
