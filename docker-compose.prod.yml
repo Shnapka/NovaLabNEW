@@ -32,7 +32,7 @@ services:
     # Порт наружу не открываем — база доступна только сайту внутри сети Docker
 
   migrate:
-    build: { context: ., target: migrate }
+    build: { context: ., dockerfile: deploy/Dockerfile, target: migrate }
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-novalab}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-novalab}
       SEED: ${SEED:-1}
@@ -43,7 +43,7 @@ services:
     restart: "no"
 
   web:
-    build: { context: ., target: web }
+    build: { context: ., dockerfile: deploy/Dockerfile, target: web }
     restart: unless-stopped
     environment:
       # connection_limit — не больше 5 соединений с базой из пула Prisma
@@ -57,7 +57,7 @@ services:
     mem_limit: 640m
 
   caddy:
-    build: { context: ., target: caddy }
+    build: { context: ., dockerfile: deploy/Dockerfile, target: caddy }
     restart: unless-stopped
     environment:
       DOMAIN: ${DOMAIN:-localhost}

@@ -2,6 +2,7 @@
 #   web     — сайт (Next.js standalone, ~150–250 МБ памяти)
 #   migrate — разовый запуск: миграции базы (+ сид программы, если SEED=1)
 #   caddy   — HTTPS и отдача Unity-билдов с диска в сжатом виде
+# Лежит в deploy/, а не в корне, чтобы Railway (тестовая площадка) не принял его за свой.
 # Сборка и запуск: docker compose -f docker-compose.prod.yml up -d --build
 
 FROM node:20-bookworm-slim AS base
