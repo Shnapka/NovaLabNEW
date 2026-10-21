@@ -178,7 +178,6 @@ model Student {
   classroomId String
   classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
   results     Result[]
-  feedback    LessonFeedback[]
   createdAt   DateTime  @default(now())
 
   @@unique([classroomId, name])
@@ -203,15 +202,18 @@ model Result {
   @@index([lessonId, studentId])
 }
 
-// Отзыв ученика в конце урока. Ссылки обнуляются при удалении ученика, класса или урока,
-// а названия сохранены копией — отзыв остаётся в панели администратора.
+// Отзыв ученика в конце урока — анонимный: ни ученика, ни его имени, ни точного времени в базе нет.
+// voterKey — HMAC(AUTH_SECRET, ученик:урок): по нему ученик может исправить свой отзыв, но по базе его не узнать.
+// Ссылки на урок и класс обнуляются при удалении, названия сохранены копией — отзыв остаётся в панели администратора.
 model LessonFeedback {
-  id            String     @id @default(cuid())
+  id            String     @id @default(uuid()) // случайный id: по нему не восстановить порядок отправки
+  voterKey      String     @unique
   rating        Int // 1..10
-  liked         String?
+  likedTags     String[]   @default([]) // варианты из lib/feedback.ts (STUDENT_LIKED)
+  dislikedTags  String[]   @default([]) // варианты из lib/feedback.ts (STUDENT_DISLIKED)
+  wish          String? // «Что бы вы хотели видеть?»
+  liked         String? // свободный текст из старой версии опроса
   disliked      String?
-  studentId     String?
-  student       Student?   @relation(fields: [studentId], references: [id], onDelete: SetNull)
   lessonId      String?
   lesson        Lesson?    @relation(fields: [lessonId], references: [id], onDelete: SetNull)
   classroomId   String?
@@ -219,11 +221,8 @@ model LessonFeedback {
   teacherId     String? // владелец класса на момент отзыва
   lessonTitle   String
   classroomName String
-  studentName   String
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  day           DateTime   @default(now()) @db.Date // только дата, без времени
 
-  @@unique([studentId, lessonId])
   @@index([classroomId])
 }
 

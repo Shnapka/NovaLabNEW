@@ -100,7 +100,7 @@ export default function StudentLesson({
         finale={{
           label: "Оценка урока",
           done: !!feedback,
-          content: <StudentFeedback lessonId={lessonId} initial={feedback} onSaved={setFeedback} />,
+          content: <StudentFeedback lessonId={lessonId} moduleTypes={[...new Set(blocks.map((b) => b.type))]} initial={feedback} onSaved={setFeedback} />,
         }}
         renderBelow={(b) =>
           b.type === "practice" && b.moduleId ? (

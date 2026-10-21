@@ -33,3 +33,24 @@ export async function studentGrades(classroomIds: string[]): Promise<number[]> {
   }
   return [...out].filter((n) => existing.has(n)).sort((a, b) => a - b);
 }
+
+/**
+ * Темы, открытые ученику в лаборатории: только те, из которых учитель собрал уроки и выложил их классам ученика.
+ * Не пройденные на уроках темы закрыты — и в списке, и по прямой ссылке.
+ */
+export async function labTopics(classroomIds: string[]) {
+  if (!classroomIds.length) return { grades: [] as number[], topicIds: new Set<number>() };
+  const [grades, modules] = await Promise.all([
+    studentGrades(classroomIds),
+    prisma.module.findMany({
+      where: { blocks: { some: { lesson: { classrooms: { some: { id: { in: classroomIds } } } } } } },
+      select: { topicId: true, topic: { select: { section: { select: { grade: { select: { number: true } } } } } } },
+    }),
+  ]);
+  // Темы чужого класса не открываем, даже если учитель взял их в урок
+  const own = modules.filter((m) => grades.includes(m.topic.section.grade.number));
+  return {
+    grades: grades.filter((g) => own.some((m) => m.topic.section.grade.number === g)),
+    topicIds: new Set(own.map((m) => m.topicId)),
+  };
+}

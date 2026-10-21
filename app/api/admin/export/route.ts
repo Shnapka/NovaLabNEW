@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { adminSession } from "@/lib/authz";
 import { prisma } from "@/lib/db";
-import { TEACHER_QUESTIONS, answerLabel, type ReviewAnswers } from "@/lib/feedback";
+import { STUDENT_DISLIKED, STUDENT_LIKED, TEACHER_QUESTIONS, answerLabel, type FeedbackOption, type ReviewAnswers } from "@/lib/feedback";
 
 // Защита от формул в Excel: значения, начинающиеся с = + - @, экранируются апострофом
 const cell = (v: unknown) => {
@@ -32,10 +32,22 @@ export async function GET(req: Request) {
       ]),
     ]);
   } else if (type === "students") {
-    const items = await prisma.lessonFeedback.findMany({ orderBy: { updatedAt: "desc" } });
+    // Отзывы учеников анонимные: только дата, класс и урок
+    const items = await prisma.lessonFeedback.findMany({ orderBy: [{ day: "desc" }, { voterKey: "asc" }] });
+    const labels = (ids: string[], options: FeedbackOption[]) => ids.map((id) => options.find((o) => o.id === id)?.label ?? id).join(", ");
     body = csv([
-      ["Дата", "Ученик", "Класс", "Урок", "Оценка", "Понравилось", "Не понравилось"],
-      ...items.map((f) => [f.updatedAt.toISOString(), f.studentName, f.classroomName, f.lessonTitle, f.rating, f.liked, f.disliked]),
+      ["Дата", "Класс", "Урок", "Оценка", "Понравилось", "Не понравилось", "Хотели бы видеть", "Комментарий (старый опрос): понравилось", "Комментарий (старый опрос): не понравилось"],
+      ...items.map((f) => [
+        f.day.toISOString().slice(0, 10),
+        f.classroomName,
+        f.lessonTitle,
+        f.rating,
+        labels(f.likedTags, STUDENT_LIKED),
+        labels(f.dislikedTags, STUDENT_DISLIKED),
+        f.wish,
+        f.liked,
+        f.disliked,
+      ]),
     ]);
   } else {
     return NextResponse.json({ error: "type: students | teachers" }, { status: 400 });

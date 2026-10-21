@@ -9,7 +9,7 @@ export default async function AdminLessons() {
   if (!(await adminSession())) redirect("/admin/login");
 
   const [feedback, reviews] = await Promise.all([
-    prisma.lessonFeedback.findMany({ select: { lessonTitle: true, rating: true, liked: true, disliked: true, teacherId: true } }),
+    prisma.lessonFeedback.findMany({ select: { lessonTitle: true, rating: true, wish: true, liked: true, disliked: true, teacherId: true } }),
     prisma.teacherReview.findMany({ select: { lessonTitle: true, rating: true, comment: true, teacherId: true } }),
   ]);
   const titles = [...new Set([...feedback.map((f) => f.lessonTitle), ...reviews.map((r) => r.lessonTitle)])];
@@ -21,7 +21,7 @@ export default async function AdminLessons() {
         title: t,
         sCount: fs.length,
         sAvg: avg(fs.map((f) => f.rating)),
-        sComments: fs.filter((f) => f.liked || f.disliked).length,
+        sComments: fs.filter((f) => f.wish || f.liked || f.disliked).length,
         tCount: rs.length,
         tAvg: avg(rs.map((r) => r.rating)),
         teachers: new Set([...fs.map((f) => f.teacherId), ...rs.map((r) => r.teacherId)].filter(Boolean)).size,

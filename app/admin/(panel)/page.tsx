@@ -18,7 +18,7 @@ export default async function AdminOverview() {
     prisma.classroom.count(),
     prisma.lesson.count(),
     prisma.lessonFeedback.groupBy({ by: ["rating"], _count: { _all: true } }),
-    prisma.lessonFeedback.findMany({ orderBy: { updatedAt: "desc" }, take: 6 }),
+    prisma.lessonFeedback.findMany({ orderBy: [{ day: "desc" }, { voterKey: "asc" }], take: 6 }),
     prisma.teacherReview.findMany({ orderBy: { updatedAt: "desc" }, select: { id: true, rating: true, answers: true, comment: true, lessonTitle: true, teacherName: true, classroomName: true, updatedAt: true } }),
   ]);
   const studentRatings = ratingCounts.flatMap((c) => Array<number>(c._count._all).fill(c.rating));
@@ -94,8 +94,8 @@ export default async function AdminOverview() {
               <Score r={f.rating} />
               <div className="min-w-0 text-sm">
                 <div className="truncate font-semibold text-slate-800">{f.lessonTitle}</div>
-                <div className="text-xs text-slate-500">{f.studentName} · {f.classroomName} · {time(f.updatedAt)}</div>
-                {(f.liked || f.disliked) && <p className="mt-1 line-clamp-2 text-slate-600">{[f.liked && `👍 ${f.liked}`, f.disliked && `👎 ${f.disliked}`].filter(Boolean).join("  ")}</p>}
+                <div className="text-xs text-slate-500">анонимно · {f.classroomName} · {f.day.toLocaleDateString("ru-RU", { day: "numeric", month: "short", timeZone: "UTC" })}</div>
+                {(f.wish || f.liked || f.disliked) && <p className="mt-1 line-clamp-2 text-slate-600">{f.wish ? `💡 ${f.wish}` : [f.liked && `👍 ${f.liked}`, f.disliked && `👎 ${f.disliked}`].filter(Boolean).join("  ")}</p>}
               </div>
             </li>
           ))}

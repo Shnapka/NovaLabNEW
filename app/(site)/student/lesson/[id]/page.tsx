@@ -5,6 +5,7 @@ import StudentLesson from "@/components/StudentLesson";
 import type { PracticeAttempt } from "@/components/PracticeLog";
 import { applyOverride } from "@/lib/modules/overrides";
 import { kindOf, kindsOf, solvedKinds } from "@/lib/practice/kinds";
+import { voterKey } from "@/lib/feedbackSchema";
 
 export default async function StudentLessonPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -23,7 +24,8 @@ export default async function StudentLessonPage({ params }: { params: Promise<{ 
 
   const [results, feedback, deadline] = await Promise.all([
     prisma.result.findMany({ where: { studentId: student.id, lessonId: lesson.id }, orderBy: { createdAt: "desc" } }),
-    prisma.lessonFeedback.findUnique({ where: { studentId_lessonId: { studentId: student.id, lessonId: lesson.id } } }),
+    // Свой анонимный отзыв ученик находит по ключу — в самом отзыве его нет
+    prisma.lessonFeedback.findUnique({ where: { voterKey: voterKey(student.id, lesson.id) } }),
     prisma.lessonDeadline.findUnique({ where: { classroomId_lessonId: { classroomId: student.classroomId, lessonId: lesson.id } } }),
   ]);
 
@@ -53,7 +55,7 @@ export default async function StudentLessonPage({ params }: { params: Promise<{ 
       initialDone={[...new Set(results.map((r) => r.moduleId))]}
       initialPractice={practice}
       dueAt={deadline?.dueAt.toISOString() ?? null}
-      initialFeedback={feedback ? { rating: feedback.rating, liked: feedback.liked ?? "", disliked: feedback.disliked ?? "" } : null}
+      initialFeedback={feedback ? { rating: feedback.rating, likedTags: feedback.likedTags, dislikedTags: feedback.dislikedTags, wish: feedback.wish ?? "" } : null}
       blocks={lesson.blocks.map((b) => {
         return {
           id: b.id,

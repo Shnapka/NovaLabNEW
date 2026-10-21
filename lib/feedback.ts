@@ -110,3 +110,51 @@ export function ratingClass(r: number | null | undefined) {
 
 export const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
 export const fmtAvg = (x: number | null) => (x == null ? "—" : x.toFixed(1).replace(".", ","));
+
+/**
+ * Анонимный опрос ученика в конце урока: оценка, готовые варианты «понравилось / не понравилось»
+ * и одно поле «Что бы вы хотели видеть?». id вариантов хранятся в базе — подписи менять можно, id нет.
+ * module — вариант про модуль урока: показывается, только если такой модуль есть в уроке.
+ */
+export type FeedbackOption = { id: string; label: string; module?: string };
+
+export const STUDENT_LIKED: FeedbackOption[] = [
+  { id: "simulation", label: "Симуляция", module: "simulation" },
+  { id: "graph", label: "Графики", module: "graph" },
+  { id: "summary", label: "Конспект", module: "summary" },
+  { id: "practice", label: "Составлять свою задачу", module: "practice" },
+  { id: "quiz", label: "Квиз", module: "quiz" },
+  { id: "matching", label: "Карточки", module: "matching" },
+  { id: "clear", label: "Понятное объяснение" },
+  { id: "interesting", label: "Интересная тема" },
+  { id: "pace", label: "Удобный темп" },
+];
+
+export const STUDENT_DISLIKED: FeedbackOption[] = [
+  { id: "nothing", label: "Всё понравилось" },
+  { id: "unclear", label: "Непонятное объяснение" },
+  { id: "hard", label: "Слишком сложно" },
+  { id: "easy", label: "Слишком легко" },
+  { id: "long", label: "Слишком долго или много текста" },
+  { id: "boring", label: "Было скучно" },
+  { id: "loading", label: "Долго загружалось" },
+  { id: "bugs", label: "Что-то не работало" },
+];
+
+/** Только известные варианты; «Всё понравилось» исключает остальные */
+export function cleanTags(raw: string[], options: FeedbackOption[], exclusive?: string) {
+  const ids = new Set(options.map((o) => o.id));
+  const list = [...new Set(raw)].filter((x) => ids.has(x));
+  return exclusive && list.includes(exclusive) ? [exclusive] : list;
+}
+
+/** Сколько раз отмечен каждый вариант — для сводки учителя и администратора */
+export function tagCounts(lists: string[][], options: FeedbackOption[]) {
+  return options
+    .map((o) => ({ ...o, count: lists.filter((l) => l.includes(o.id)).length }))
+    .filter((o) => o.count > 0)
+    .sort((a, b) => b.count - a.count);
+}
+
+/** Учитель видит отзывы по уроку, только когда их оставили хотя бы столько учеников — иначе легко догадаться, кто писал */
+export const MIN_ANONYMOUS = 3;
