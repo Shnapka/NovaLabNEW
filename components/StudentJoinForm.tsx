@@ -2,9 +2,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-// account — ученик с аккаунтом вступает в (ещё один) класс; иначе быстрый вход без аккаунта
+// account — ученик с аккаунтом вступает в (ещё один) класс; иначе быстрый вход без аккаунта:
+// вернувшийся ученик — код класса + PIN, новичок — код класса + имя (PIN выдаётся сразу)
 export default function StudentJoinForm({ account }: { account?: { name: string } }) {
   const router = useRouter();
+  const [mode, setMode] = useState<"pin" | "first">("pin");
+  const byPin = !account && mode === "pin";
   const [code, setCode] = useState("");
   const [name, setName] = useState(account?.name ?? "");
   const [pin, setPin] = useState("");
@@ -22,13 +25,18 @@ export default function StudentJoinForm({ account }: { account?: { name: string 
     const r = await fetch("/api/student/join", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, name, pin: needPin ? pin : undefined }),
+      body: JSON.stringify(byPin ? { code, pin } : { code, name, pin: needPin ? pin : undefined }),
     });
     const data = await r.json();
     setBusy(false);
     if (!r.ok) {
       setError(data.error ?? "Ошибка");
       if (data.needPin) setNeedPin(true);
+      // Совпавший PIN у двух учеников — нужен вход с именем
+      if (data.needName) {
+        setMode("first");
+        setNeedPin(true);
+      }
       return;
     }
     if (account) {
@@ -57,6 +65,27 @@ export default function StudentJoinForm({ account }: { account?: { name: string 
 
   return (
     <form onSubmit={join} className={account ? "grid gap-3 sm:grid-cols-[160px_1fr_auto] sm:items-end" : "space-y-4"}>
+      {!account && (
+        <div className="flex rounded-xl bg-mist-50 p-1 text-sm font-semibold">
+          {([
+            ["pin", "У меня есть PIN"],
+            ["first", "Первый вход"],
+          ] as const).map(([m, label]) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => {
+                setMode(m);
+                setError("");
+                setNeedPin(false);
+              }}
+              className={`flex-1 rounded-lg py-2 transition ${mode === m ? "bg-white text-ocean-800 shadow-sm" : "text-slate-500 hover:text-ocean-700"}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
       <label className="block">
         <span className="mb-1 block text-sm font-medium text-slate-700">Код класса</span>
         <input
@@ -68,11 +97,29 @@ export default function StudentJoinForm({ account }: { account?: { name: string 
           onChange={(e) => setCode(e.target.value.toUpperCase())}
         />
       </label>
-      <label className="block">
-        <span className="mb-1 block text-sm font-medium text-slate-700">{account ? "Имя в классе" : "Фамилия и имя"}</span>
-        <input className="input" placeholder="Иванов Пётр" required minLength={2} value={name} onChange={(e) => { setName(e.target.value); setNeedPin(false); }} />
-      </label>
-      {needPin && (
+      {byPin ? (
+        <label className="block">
+          <span className="mb-1 block text-sm font-medium text-slate-700">PIN-код</span>
+          <input
+            className="input text-center font-mono text-xl tracking-[0.3em]"
+            inputMode="numeric"
+            autoComplete="off"
+            placeholder="••••"
+            pattern="\d{4}"
+            maxLength={4}
+            required
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+          />
+          <span className="mt-1 block text-xs text-slate-400">Тот, что выдали при первом входе. Забыл — спроси у учителя.</span>
+        </label>
+      ) : (
+        <label className="block">
+          <span className="mb-1 block text-sm font-medium text-slate-700">{account ? "Имя в классе" : "Фамилия и имя"}</span>
+          <input className="input" placeholder="Иванов Пётр" required minLength={2} value={name} onChange={(e) => { setName(e.target.value); setNeedPin(false); }} />
+        </label>
+      )}
+      {needPin && !byPin && (
         <label className={`block ${account ? "sm:col-span-3" : ""}`}>
           <span className="mb-1 block text-sm font-medium text-slate-700">PIN-код</span>
           <input className="input text-center font-mono text-xl tracking-[0.3em]" inputMode="numeric" maxLength={4} required value={pin} onChange={(e) => setPin(e.target.value)} />

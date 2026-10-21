@@ -53,6 +53,16 @@ export function labOwner(ctx: Awaited<ReturnType<typeof getStudentContext>>) {
 export const newStudentToken = () => randomBytes(24).toString("base64url");
 export const newPin = () => String(randomInt(0, 10000)).padStart(4, "0");
 
+/** PIN, которого ещё нет в классе: по коду класса и PIN ученик входит без имени */
+export async function classPin(classroomId: string) {
+  const taken = new Set((await prisma.student.findMany({ where: { classroomId }, select: { pin: true } })).map((s) => s.pin));
+  for (let i = 0; i < 50; i++) {
+    const pin = newPin();
+    if (!taken.has(pin)) return pin;
+  }
+  return newPin();
+}
+
 // Код класса без похожих символов (0/O, 1/I/L)
 const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 export const newClassCode = () => Array.from({ length: 6 }, () => CODE_ALPHABET[randomInt(0, CODE_ALPHABET.length)]).join("");

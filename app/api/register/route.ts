@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { STUDENT_COOKIE, getStudent, newPin, newStudentToken, normalizeName } from "@/lib/student";
+import { STUDENT_COOKIE, classPin, getStudent, newStudentToken, normalizeName } from "@/lib/student";
 
 const schema = z.object({
   name: z.string().trim().min(2),
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
       });
     }
     await prisma.student.create({
-      data: { name, classroomId: classroom.id, userId: user.id, pin: newPin(), token: newStudentToken() },
+      data: { name, classroomId: classroom.id, userId: user.id, pin: await classPin(classroom.id), token: newStudentToken() },
     });
     return NextResponse.json({ ok: true, classroom: classroom.name });
   }

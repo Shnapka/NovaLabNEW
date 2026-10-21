@@ -42,8 +42,8 @@ export default async function StudentPage({ searchParams }: { searchParams: Prom
           </section>
           <section className="card p-7">
             <h2 className="text-xl font-extrabold text-ocean-900">Быстрый вход без почты</h2>
-            <p className="mt-1 text-xs text-slate-400">Подойдёт, если почты нет. Результаты сохранятся, а аккаунт можно создать позже.</p>
-            <p className="mb-5 mt-1 text-sm text-slate-500">Код класса, имя и PIN-код. Аккаунт можно создать позже — результаты сохранятся.</p>
+            <p className="mt-1 text-xs text-slate-400">Подойдёт, если почты нет. Аккаунт можно создать позже — результаты сохранятся.</p>
+            <p className="mb-5 mt-1 text-sm text-slate-500">Уже заходил — код класса и PIN, имя не нужно. Первый раз — код класса и имя, PIN выдадим сразу.</p>
             <StudentJoinForm />
           </section>
         </div>
