@@ -1,12 +1,14 @@
 import type { PracticeTopic } from "./common";
 import { speedTopic } from "./speed";
 import { archimedesTopic } from "./archimedes";
+import { massTopic } from "./mass";
 import { isCorrect, parseAnswer } from "./common";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const PRACTICE_TOPICS: Record<string, PracticeTopic<any>> = {
   speed: speedTopic,
   archimedes: archimedesTopic,
+  mass: massTopic,
 };
 
 export type CheckResult =

@@ -16,6 +16,12 @@ export const PRACTICE_KINDS: Record<string, PracticeKind[]> = {
     { value: "P1", label: "Вес в жидкости" },
     { value: "cargo", label: "Груз кораблика" },
   ],
+  mass: [
+    { value: "spring", label: "Пружинные весы" },
+    { value: "lever", label: "Рычажные весы" },
+    { value: "tare", label: "Масса без тары" },
+    { value: "pieces", label: "Масса одного из многих" },
+  ],
 };
 
 export const kindsOf = (topic: string | undefined | null): PracticeKind[] => PRACTICE_KINDS[topic ?? ""] ?? [];

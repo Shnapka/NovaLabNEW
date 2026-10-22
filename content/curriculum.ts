@@ -2,6 +2,7 @@ import type { ModuleSeed } from "../lib/modules/types";
 import { speedModules } from "./topics/speed";
 import { archimedesModules } from "./topics/archimedes";
 import { energyModules } from "./topics/energy";
+import { massModules } from "./topics/mass";
 
 // Программа построена по оглавлениям учебников:
 //  7 кл. — Б. Кронгарт, Е. Даданбеков, У. Токбергенова «Физика. 7 класс» (Мектеп, 2025): главы I–X, § 1–41
@@ -49,7 +50,7 @@ export const curriculum: GradeSeed[] = [
       {
         title: "Плотность",
         topics: [
-          p("§ 10", "Масса и измерение массы тел"),
+          p("§ 10", "Масса и измерение массы тел", massModules),
           p("§ 11", "Измерение объёма тел правильной и неправильной формы"),
           p("§ 12", "Плотность вещества и единицы измерения плотности. Расчёт плотности"),
           p("Лаб. № 3", "Лабораторная работа № 3. Определение плотности жидкостей и твёрдых тел"),
